@@ -2,7 +2,7 @@ import json
 import time
 from dataclasses import dataclass
 from functools import cached_property
-from os import path
+from os import makedirs, path
 from typing import NewType
 
 import click
@@ -165,13 +165,12 @@ def _generate_credential(
     return Credential(private_key=private_key, path=signing_key_path, network=network, vault=vault)
 
 
-def export_deposit_data_json(credentials: list[Credential], directory: str) -> str:
+def export_deposit_data_json(credentials: list[Credential], filename: str) -> str:
     with click.progressbar(
         credentials, label='Generating deposit data json\t\t', show_percent=False, show_pos=True
     ) as _credentials:
         deposit_data = [cred.deposit_datum_dict for cred in _credentials]
-
-    filename = path.join(directory, 'deposit_data.json')
+    makedirs(path.dirname(path.abspath(filename)), exist_ok=True)
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(deposit_data, f, default=lambda x: x.hex())
     return filename

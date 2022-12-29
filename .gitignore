@@ -5,4 +5,4 @@ dist
 .idea
 local.env
 *.env
-/key_manager/deposit_data/
+/key_manager/data/

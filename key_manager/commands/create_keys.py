@@ -75,16 +75,17 @@ from key_manager.web3signer import Web3signer
     type=str,
 )
 @click.option(
-    '--deposit-data-dir',
-    help='The directory to store the deposit data file. Defaults to ./data/deposit_data',
-    prompt='Enter the directory to store the deposit data file.',
-    type=click.Path(exists=False, file_okay=False, dir_okay=True),
+    '--deposit-data-file',
+    help='The file to store the deposit data file. Defaults to ./data/deposit_data.json',
+    type=click.Path(exists=False, file_okay=True, dir_okay=False),
+    default='./data/deposit_data.json'
 )
 @click.option(
     '--keystores-dir',
     required=False,
     help='The directory to store the validator keys in the EIP-2335 standard.'
     ' It is ignored when web3signer-endpoint is used. Defaults to ./data/keystores.',
+    default='./data/keystore',
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
 @click.option(
@@ -93,6 +94,7 @@ from key_manager.web3signer import Web3signer
     help='The file to store randomly generated password for encrypting the keystores.'
     'It is ignored when web3signer-endpoint is used. '
     'Defaults to ./<keystores-dir>/password.txt.',
+    default='./data/keystore/password.txt',
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
 )
 @click.option(
@@ -117,7 +119,7 @@ async def create_keys(
     execution_endpoint: str,
     consensus_endpoint: str,
     ipfs_endpoints: list[str],
-    deposit_data_dir: str,
+    deposit_data_file: str,
     keystores_dir: str,
     password_file: str,
     web3signer_endpoint: str,
@@ -155,7 +157,7 @@ async def create_keys(
         used_keys=used_keys,
         consensus_client=consensus_client,
     )
-    deposit_data = export_deposit_data_json(credentials=credentials, directory=deposit_data_dir)
+    deposit_data = export_deposit_data_json(credentials=credentials, filename=deposit_data_file)
 
     if web3signer_endpoint:
         if not no_confirm:
