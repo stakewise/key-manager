@@ -191,7 +191,7 @@ async def create_keys(
 
     click.clear()
     click.secho(
-        f'Done. Generated {count} keys for {vault} vault. \n'
+        f'Done. Generated {count} keys for {vault} vault.\n'
         f'Deposit data saved to {deposit_data} file',
         bold=True,
         fg='green',
