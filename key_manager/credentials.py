@@ -28,7 +28,7 @@ from web3 import Web3
 
 from key_manager import KEY_MANAGER_VERSION
 from key_manager.password import get_or_create_password_file
-from key_manager.settings import IS_LEGACY, NETWORKS
+from key_manager.settings import NETWORKS
 
 # Set path as EIP-2334 format
 # https://eips.ethereum.org/EIPS/eip-2334
@@ -52,6 +52,10 @@ class Credential:
         return w3.to_hex(G2ProofOfPossession.SkToPk(self.private_key))
 
     @cached_property
+    def private_key_bytes(self) -> bytes:
+        return self.private_key.to_bytes(32, 'big')
+
+    @cached_property
     def amount(self) -> int:
         return NETWORKS[self.network].DEPOSIT_AMOUNT_GWEI
 
@@ -59,12 +63,15 @@ class Credential:
     def withdrawal_credentials(self) -> Bytes32:
         return get_eth1_withdrawal_credentials(self.vault)
 
-    def signing_keystore(self, password: str) -> Keystore:
-        secret = self.private_key.to_bytes(32, 'big')
-        return ScryptKeystore.encrypt(secret=secret, password=password, path=self.path)
+    def encrypt_signing_keystore(self, password: str) -> Keystore:
+        return ScryptKeystore.encrypt(
+            secret=self.private_key_bytes,
+            password=password,
+            path=self.path
+        )
 
     def save_signing_keystore(self, password: str, folder: str) -> str:
-        keystore = self.signing_keystore(password)
+        keystore = self.encrypt_signing_keystore(password)
         filefolder = path.join(
             folder, f'keystore-{keystore.path.replace("/", "_")}-{time.time()}.json'
         )
@@ -86,7 +93,7 @@ class Credential:
         signed_deposit = DepositData(
             **self.deposit_message.as_dict(),
             # pylint: disable-next=no-member
-            signature=bls.Sign(Web3.to_bytes(self.private_key), signing_root),
+            signature=bls.Sign(self.private_key_bytes, signing_root),
         )
         return signed_deposit
 
@@ -126,7 +133,7 @@ async def generate_credentials(
             # generate keys in chunks
             public_keys_chunk: list[HexStr] = []
             while len(public_keys_chunk) != chunk_size:
-                credential = _generate_credential(network, vault, mnemonic, from_index, IS_LEGACY)
+                credential = _generate_credential(network, vault, mnemonic, from_index)
 
                 if credential.public_key not in used_keys:
                     credentials[credential.public_key] = credential
@@ -148,16 +155,13 @@ async def generate_credentials(
 
 
 def _generate_credential(
-    network: str, vault: HexAddress, mnemonic: str, from_index: int, is_legacy: bool = False
+    network: str, vault: HexAddress, mnemonic: str, from_index: int
 ) -> Credential:
     """Returns the signing key of the mnemonic at a specific index."""
     seed = get_seed(mnemonic=mnemonic, password='')  # nosec
     private_key = BLSPrivkey(derive_master_SK(seed))
     signing_key_path = f'm/{PURPOSE}/{COIN_TYPE}/{from_index}/0/0'
-    if is_legacy:
-        nodes = path_to_nodes(f'm/{PURPOSE}/{COIN_TYPE}/0/0/{from_index}')
-    else:
-        nodes = path_to_nodes(signing_key_path)
+    nodes = path_to_nodes(signing_key_path)
 
     for node in nodes:
         private_key = BLSPrivkey(derive_child_SK(parent_SK=private_key, index=node))

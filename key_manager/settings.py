@@ -16,11 +16,6 @@ MAINNET = 'mainnet'
 GOERLI = 'goerli'
 GNOSIS = 'gnosis'
 
-# aliases
-PRATER = 'prater'
-
-IS_LEGACY = False
-
 
 @dataclass
 class NetworkConfig:
@@ -74,6 +69,4 @@ NETWORKS = {
 }
 
 # Alias
-NETWORKS[PRATER] = NETWORKS[GOERLI]
-
 AVAILABLE_NETWORKS = list(NETWORKS.keys())

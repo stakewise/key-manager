@@ -17,7 +17,7 @@ from key_manager.language import LANGUAGES, create_new_mnemonic
     is_flag=True,
     help='Skips mnemonic verification when provided.',
 )
-@click.command(help='Creates deposit data and generates a forum post specification')
+@click.command(help='Creates the mnemonic used to derive validator keys.')
 def create_mnemonic(language: str, no_verify: bool) -> None:
     if not language:
         language = click.prompt(

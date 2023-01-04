@@ -34,7 +34,7 @@ from key_manager.web3signer import Web3signer
     '--mnemonic',
     required=True,
     help='The mnemonic for generating the validator keys.',
-    prompt='Enter the mnemonic for generating the validator keys.',
+    prompt='Enter the mnemonic for generating the validator keys',
     type=str,
     callback=validate_mnemonic,
 )
@@ -42,14 +42,14 @@ from key_manager.web3signer import Web3signer
     '--count',
     required=True,
     help='The number of the validator keys to generate. Can be at most 10 000.',
-    prompt='Enter the number of the validator keys to generate. Can be at most 10 000.',
+    prompt='Enter the number of the validator keys to generate. Can be at most 10 000',
     type=int,
 )
 @click.option(
     '--vault',
     required=True,
     help='The vault address for which the validator keys are generated.',
-    prompt='Enter the vault address for which the validator keys are generated.',
+    prompt='Enter the vault address for which the validator keys are generated',
     type=str,
     callback=validate_eth_address,
 )
@@ -57,14 +57,14 @@ from key_manager.web3signer import Web3signer
     '--execution-endpoint',
     required=True,
     help='The endpoint of the execution node.',
-    prompt='Enter the endpoint of the execution node.',
+    prompt='Enter the endpoint of the execution node',
     type=str,
 )
 @click.option(
     '--consensus-endpoint',
     required=True,
     help='The endpoint of the consensus node.',
-    prompt='Enter the endpoint of the consensus node.',
+    prompt='Enter the endpoint of the consensus node',
     type=str,
 )
 @click.option(
@@ -91,7 +91,7 @@ from key_manager.web3signer import Web3signer
 @click.option(
     '--password-file',
     required=False,
-    help='The file to store randomly generated password for encrypting the keystores.'
+    help='The file to store randomly generated password for encrypting the keystores. '
     'It is ignored when web3signer-endpoint is used. '
     'Defaults to ./<keystores-dir>/password.txt.',
     default='./data/keystore/password.txt',
