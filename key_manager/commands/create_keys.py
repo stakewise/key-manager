@@ -41,8 +41,8 @@ from key_manager.web3signer import Web3signer
 @click.option(
     '--count',
     required=True,
-    help='The number of the validator keys to generate. Can be at most 10 000.',
-    prompt='Enter the number of the validator keys to generate. Can be at most 10 000',
+    help='The number of the validator keys to generate.',
+    prompt='Enter the number of the validator keys to generate',
     type=click.IntRange(min=1, max=10000),
 )
 @click.option(
