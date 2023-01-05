@@ -184,7 +184,7 @@ def export_keystores(credentials: list[Credential], keystores_dir: str, password
     password = get_or_create_password_file(password_file)
     with click.progressbar(
         credentials,
-        label='Syncing deposit data keystores\t\t',
+        label='Exporting validator keystores\t\t',
         show_percent=False,
         show_pos=True,
     ) as _credentials:

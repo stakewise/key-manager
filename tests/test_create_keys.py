@@ -56,7 +56,7 @@ class TestCreateKeys(unittest.TestCase):
             output = f'''
             Creating validator keys:\t\t
 Generating deposit data json\t\t
-Syncing deposit data keystores\t\t
+Exporting validator keystores\t\t
 Done. Generated 5 keys for {vault} vault.
 Deposit data saved to ./data/deposit_data.json file
 '''
