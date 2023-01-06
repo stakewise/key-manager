@@ -20,7 +20,7 @@ staking-deposit = {git = "https://github.com/ethereum/eth2.0-deposit-cli", rev =
 python-decouple = "==3.6"
 multiproof = "==0.1.1"
 milagro-bls-binding = "==1.9.0"
-sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.2.3"}
+sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.2.6"}
 
 
 [tool.poetry.group.dev.dependencies]
@@ -33,13 +33,14 @@ Flake8-pyproject = "==1.1.0"
 black = "==22.10.0"
 faker = "==15.3.4"
 types-requests = "==2.28.11.7"
+types-pyyaml = "==6.0.12.2"
 
 
 [tool.bandit]
 exclude_dirs = ["tests/*"]
 
 [tool.pylint."pre-commit-hook"]
-disable = ["C0103", "C0114", "C0115", "C0116", "R0902", "R0903", "R0913", "R0914"]
+disable = ["C0103", "C0114", "C0115", "C0116", "C0209", "R0801", "R0902", "R0903", "R0913", "R0914"]
 
 [tool.pylint."BASIC"]
 good-names = ["bar", "i", "el", "e", "w", "f", "w3"]

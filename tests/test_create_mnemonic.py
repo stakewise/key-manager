@@ -25,7 +25,6 @@ class TestCreateMnemonic(unittest.TestCase):
         runner = CliRunner()
         args = ['--language', 'english']
         result = runner.invoke(create_mnemonic, args, input=f'a\n{mnemonic} bad\na\n{mnemonic}\n')
-        print(result.output)
         assert result.exit_code == 0
         mnemonic_mock.assert_called_once()
         assert mnemonic in result.output.strip()
