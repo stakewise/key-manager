@@ -26,10 +26,3 @@ def create_mnemonic(language: str, no_verify: bool) -> None:
             type=click.Choice(LANGUAGES, case_sensitive=False),
         )
     create_new_mnemonic(language, skip_test=no_verify)
-
-    click.clear()
-    click.secho(
-        'done.',
-        bold=True,
-        fg='green',
-    )

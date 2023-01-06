@@ -12,8 +12,11 @@ WORD_LISTS_PATH = os.path.join(os.path.dirname(__file__), 'word_lists')
 LANGUAGES = MNEMONIC_LANG_OPTIONS.keys()
 
 
-def create_new_mnemonic(mnemonic_language: str, skip_test: bool) -> str:
+def create_new_mnemonic(mnemonic_language: str, skip_test: bool) -> None:
     mnemonic = get_mnemonic(language=mnemonic_language, words_path=WORD_LISTS_PATH)
+    if skip_test:
+        click.echo(mnemonic)
+        return
     test_mnemonic = ''
     while mnemonic != test_mnemonic:
         click.clear()
@@ -23,8 +26,6 @@ def create_new_mnemonic(mnemonic_language: str, skip_test: bool) -> str:
         )  # noqa: E501
         click.echo(f'\n\n{mnemonic}\n\n')
         click.pause('Press any key when you have written down your mnemonic.')
-        if skip_test:
-            return mnemonic
         click.clear()
         test_mnemonic = click.prompt(
             'Please type your mnemonic (separated by spaces) '
@@ -32,8 +33,11 @@ def create_new_mnemonic(mnemonic_language: str, skip_test: bool) -> str:
         )  # noqa: E501
         test_mnemonic = test_mnemonic.lower()
     click.clear()
-
-    return mnemonic
+    click.secho(
+        'done.',
+        bold=True,
+        fg='green',
+    )
 
 
 def validate_mnemonic(mnemonic) -> str:
