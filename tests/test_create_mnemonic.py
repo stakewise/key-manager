@@ -36,12 +36,7 @@ class TestCreateMnemonic(unittest.TestCase):
         result = runner.invoke(create_mnemonic, args)
         assert result.exit_code == 0
         mnemonic_mock.assert_called_once()
-        output = f"""
-        This is your seed phrase. Write it down and store it safely, it is the ONLY way to recover your validator keys.\n\n
-{mnemonic}\n\n
-done.
-"""
-        assert result.output.strip() == output.strip()
+        assert result.output.strip() == mnemonic.strip()
 
     def test_bad_language(self, *args):
         runner = CliRunner()
