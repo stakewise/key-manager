@@ -30,10 +30,8 @@ def validate_validator_index(ctx, param, value):
 )
 @click.option(
     '--validator-index',
-    help='The validator index to generate the configuration files. '
-    'Must be less than total-validators.',
-    prompt='Enter the validator index to generate the configuration files. '
-    'Must be less than total-validators',
+    help='The validator index to generate the configuration files.',
+    prompt='Enter the validator index to generate the configuration files',
     type=int,
     callback=validate_validator_index,
 )
