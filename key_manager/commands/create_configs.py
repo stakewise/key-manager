@@ -19,9 +19,9 @@ import click
     '--validator-index',
     required=True,
     help='The validator index to generate the configuration files. '
-         'Must be less than total-validators.',
+    'Must be less than total-validators.',
     prompt='Enter the validator index to generate the configuration files. '
-           'Must be less than total-validators.',
+    'Must be less than total-validators.',
     type=int,
 )
 @click.option(
@@ -34,8 +34,8 @@ import click
 @click.option(
     '--output-dir',
     help='The directory to store randomly generated password for encrypting the keystores. '
-         'It is ignored when web3signer-endpoint is used. '
-         'Defaults to ./<keystores-dir>/password.txt.',
+    'It is ignored when web3signer-endpoint is used. '
+    'Defaults to ./<keystores-dir>/password.txt.',
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
 )
 @click.option(
@@ -45,7 +45,7 @@ import click
 )
 @click.command(
     help='Creates validator configuration files for Lighthouse, '
-         'Prysm, and Teku clients to sign data using web3signer.'
+    'Prysm, and Teku clients to sign data using web3signer.'
 )
 # pylint: disable-next=unused-argument
 def create_configs(

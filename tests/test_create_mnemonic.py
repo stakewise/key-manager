@@ -12,7 +12,6 @@ mnemonic = ' '.join([faker.word() for x in range(24)])
 
 @patch('key_manager.language.get_mnemonic', return_value=mnemonic)
 class TestCreateMnemonic(unittest.TestCase):
-
     def test_basic(self, mnemonic_mock):
         runner = CliRunner()
         args = ['--language', 'english']

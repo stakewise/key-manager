@@ -1,6 +1,6 @@
 import click
 
-from key_manager.networks import AVAILABLE_NETWORKS, MAINNET
+from key_manager.settings import AVAILABLE_NETWORKS, MAINNET
 
 
 @click.option(
