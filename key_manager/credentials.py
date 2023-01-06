@@ -20,8 +20,8 @@ from sw_utils import ExtendedAsyncBeacon, get_eth1_withdrawal_credentials
 from sw_utils.signing import (
     DepositData,
     DepositMessage,
-    _compute_deposit_domain,
-    _compute_signing_root,
+    compute_deposit_domain,
+    compute_signing_root,
 )
 from sw_utils.typings import Bytes32
 from web3 import Web3
@@ -65,9 +65,7 @@ class Credential:
 
     def encrypt_signing_keystore(self, password: str) -> Keystore:
         return ScryptKeystore.encrypt(
-            secret=self.private_key_bytes,
-            password=password,
-            path=self.path
+            secret=self.private_key_bytes, password=password, path=self.path
         )
 
     def save_signing_keystore(self, password: str, folder: str) -> str:
@@ -88,8 +86,8 @@ class Credential:
 
     @property
     def signed_deposit(self) -> DepositData:
-        domain = _compute_deposit_domain(fork_version=NETWORKS[self.network].GENESIS_FORK_VERSION)
-        signing_root = _compute_signing_root(self.deposit_message, domain)
+        domain = compute_deposit_domain(fork_version=NETWORKS[self.network].GENESIS_FORK_VERSION)
+        signing_root = compute_signing_root(self.deposit_message, domain)
         signed_deposit = DepositData(
             **self.deposit_message.as_dict(),
             # pylint: disable-next=no-member

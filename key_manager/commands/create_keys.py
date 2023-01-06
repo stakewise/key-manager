@@ -32,7 +32,6 @@ from key_manager.web3signer import Web3signer
 )
 @click.option(
     '--mnemonic',
-    required=True,
     help='The mnemonic for generating the validator keys.',
     prompt='Enter the mnemonic for generating the validator keys',
     type=str,
@@ -40,14 +39,12 @@ from key_manager.web3signer import Web3signer
 )
 @click.option(
     '--count',
-    required=True,
     help='The number of the validator keys to generate.',
     prompt='Enter the number of the validator keys to generate',
     type=click.IntRange(min=1, max=10000),
 )
 @click.option(
     '--vault',
-    required=True,
     help='The vault address for which the validator keys are generated.',
     prompt='Enter the vault address for which the validator keys are generated',
     type=str,
@@ -55,14 +52,12 @@ from key_manager.web3signer import Web3signer
 )
 @click.option(
     '--execution-endpoint',
-    required=True,
     help='The endpoint of the execution node.',
     prompt='Enter the endpoint of the execution node',
     type=str,
 )
 @click.option(
     '--consensus-endpoint',
-    required=True,
     help='The endpoint of the consensus node.',
     prompt='Enter the endpoint of the consensus node',
     type=str,
@@ -78,7 +73,7 @@ from key_manager.web3signer import Web3signer
     '--deposit-data-file',
     help='The file to store the deposit data file. Defaults to ./data/deposit_data.json',
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
-    default='./data/deposit_data.json'
+    default='./data/deposit_data.json',
 )
 @click.option(
     '--keystores-dir',
