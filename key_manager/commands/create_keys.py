@@ -1,6 +1,6 @@
 import click
 from eth_typing import BlockNumber, HexAddress
-from sw_utils import get_consensus_client, get_execution_client
+from sw_utils import get_execution_client
 
 from key_manager.contrib import async_command
 from key_manager.credentials import (
@@ -121,7 +121,6 @@ async def create_keys(
     no_confirm: bool,
 ) -> None:
     execution_client = get_execution_client(execution_endpoint, is_poa=NETWORKS[network].IS_POA)
-    consensus_client = get_consensus_client(consensus_endpoint)
 
     current_block = await get_current_number(execution_client=execution_client)
     fetch_from_block = BlockNumber(current_block - NETWORKS[network].BEACON_SYNC_BLOCK_DISTANCE)
@@ -150,7 +149,7 @@ async def create_keys(
         mnemonic=mnemonic,
         count=count,
         used_keys=used_keys,
-        consensus_client=consensus_client,
+        consensus_endpoint=consensus_endpoint,
     )
     deposit_data = export_deposit_data_json(credentials=credentials, filename=deposit_data_file)
 
@@ -165,7 +164,7 @@ async def create_keys(
         keystores, passwords = [], []
         with click.progressbar(
             credentials,
-            label='Generating deposit data keystores\t\t',
+            label='Generating keystores for web3signer\t\t',
             show_percent=False,
             show_pos=True,
         ) as _credentials:

@@ -1,7 +1,9 @@
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import cached_property
+from multiprocessing import Pool
 from os import makedirs, path
 from typing import NewType
 
@@ -16,7 +18,7 @@ from staking_deposit.key_handling.key_derivation.tree import (
     derive_master_SK,
 )
 from staking_deposit.key_handling.keystore import Keystore, ScryptKeystore
-from sw_utils import ExtendedAsyncBeacon, get_eth1_withdrawal_credentials
+from sw_utils import get_consensus_client, get_eth1_withdrawal_credentials
 from sw_utils.signing import (
     DepositData,
     DepositMessage,
@@ -25,8 +27,11 @@ from sw_utils.signing import (
 )
 from sw_utils.typings import Bytes32
 from web3 import Web3
+from web3._utils import request
 
 from key_manager import KEY_MANAGER_VERSION
+from key_manager.consensus import get_validators
+from key_manager.contrib import async_multiprocessing_proxy, chunkify
 from key_manager.password import get_or_create_password_file
 from key_manager.settings import NETWORKS
 
@@ -95,7 +100,6 @@ class Credential:
         )
         return signed_deposit
 
-    @property
     def deposit_datum_dict(self) -> dict[str, bytes]:
         signed_deposit_datum = self.signed_deposit
         datum_dict = signed_deposit_datum.as_dict()
@@ -107,58 +111,90 @@ class Credential:
         return datum_dict
 
 
+async def generate_credentials_chunk(
+    indexes: list[int],
+    network: str,
+    vault: HexAddress,
+    mnemonic: str,
+    used_keys: list[HexStr],
+    consensus_endpoint: str,
+):
+    # Hack to run web3 sessions in multiprocessing mode
+    # pylint: disable-next=protected-access
+    request._async_session_pool = ThreadPoolExecutor(max_workers=1)
+
+    consensus_client = get_consensus_client(consensus_endpoint)
+
+    credentials: dict[HexStr, Credential] = {}
+
+    public_keys: list[HexStr] = []
+    for index in indexes:
+        credential = _generate_credential(network, vault, mnemonic, index)
+
+        if credential.public_key not in used_keys:
+            credentials[credential.public_key] = credential
+            public_keys.append(credential.public_key)
+
+    # remove keys that were already registered in beacon chain
+    result = await get_validators(consensus_client, public_keys)
+    registered_validators = [item['validator']['pubkey'] for item in result]
+    for registered_validator in registered_validators:
+        credentials.pop(registered_validator, None)
+    return list(credentials.values())
+
+
 async def generate_credentials(
     network: str,
     vault: HexAddress,
     mnemonic: str,
     count: int,
     used_keys: list[HexStr],
-    consensus_client: ExtendedAsyncBeacon,
+    consensus_endpoint: str,
 ) -> list[Credential]:
 
-    credentials: dict[HexStr, Credential] = {}
+    credentials: list[Credential] = []
     with click.progressbar(
         length=count,
         label='Creating validator keys:\t\t',
         show_percent=False,
         show_pos=True,
-    ) as bar:
-        from_index = 0
+    ) as bar, Pool() as pool:
+
+        def bar_updated(result):
+            bar.update(len(result))
+
         while len(credentials) < count:
-            curr_progress = len(credentials)
-            chunk_size = min(100, count - curr_progress)
+            results = []
+            indexes = range(count - len(credentials))
+            for chunk_indexes in chunkify(indexes, 50):
+                results.append(
+                    pool.apply_async(
+                        async_multiprocessing_proxy,
+                        [
+                            generate_credentials_chunk,
+                            chunk_indexes,
+                            network,
+                            vault,
+                            mnemonic,
+                            used_keys,
+                            consensus_endpoint,
+                        ],
+                        callback=bar_updated,
+                    )
+                )
 
-            # generate keys in chunks
-            public_keys_chunk: list[HexStr] = []
-            while len(public_keys_chunk) != chunk_size:
-                credential = _generate_credential(network, vault, mnemonic, from_index)
-
-                if credential.public_key not in used_keys:
-                    credentials[credential.public_key] = credential
-                    public_keys_chunk.append(credential.public_key)
-
-                # increase index for generating other keys
-                from_index += 1
-
-            # remove keys that were already registered in beacon chain
-            result = (await consensus_client.get_validators_by_ids(public_keys_chunk))['data']
-            registered_validators = [item['validator']['pubkey'] for item in result]
-
-            for registered_validator in registered_validators:
-                credentials.pop(registered_validator, None)
-
-            bar.update(len(credentials) - curr_progress)
-
-    return list(credentials.values())
+            for result in results:
+                result.wait()
+            for result in results:
+                credentials.extend(result.get())
+    return credentials
 
 
-def _generate_credential(
-    network: str, vault: HexAddress, mnemonic: str, from_index: int
-) -> Credential:
+def _generate_credential(network: str, vault: HexAddress, mnemonic: str, index: int) -> Credential:
     """Returns the signing key of the mnemonic at a specific index."""
     seed = get_seed(mnemonic=mnemonic, password='')  # nosec
     private_key = BLSPrivkey(derive_master_SK(seed))
-    signing_key_path = f'm/{PURPOSE}/{COIN_TYPE}/{from_index}/0/0'
+    signing_key_path = f'm/{PURPOSE}/{COIN_TYPE}/{index}/0/0'
     nodes = path_to_nodes(signing_key_path)
 
     for node in nodes:
@@ -169,9 +205,22 @@ def _generate_credential(
 
 def export_deposit_data_json(credentials: list[Credential], filename: str) -> str:
     with click.progressbar(
-        credentials, label='Generating deposit data json\t\t', show_percent=False, show_pos=True
-    ) as _credentials:
-        deposit_data = [cred.deposit_datum_dict for cred in _credentials]
+        length=len(credentials),
+        label='Generating deposit data json\t\t',
+        show_percent=False,
+        show_pos=True,
+    ) as bar, Pool() as pool:
+        results = [
+            pool.apply_async(
+                cred.deposit_datum_dict,
+                callback=lambda x: bar.update(1),
+            )
+            for cred in credentials
+        ]
+        for result in results:
+            result.wait()
+        deposit_data = [result.get() for result in results]
+
     makedirs(path.dirname(path.abspath(filename)), exist_ok=True)
     with open(filename, 'w', encoding='utf-8') as f:
         json.dump(deposit_data, f, default=lambda x: x.hex())
@@ -185,6 +234,15 @@ def export_keystores(credentials: list[Credential], keystores_dir: str, password
         label='Exporting validator keystores\t\t',
         show_percent=False,
         show_pos=True,
-    ) as _credentials:
-        for credential in _credentials:
-            credential.save_signing_keystore(password=password, folder=keystores_dir)
+    ) as bar, Pool() as pool:
+        results = [
+            pool.apply_async(
+                cred.save_signing_keystore,
+                kwds=dict(password=password, folder=keystores_dir),
+                callback=lambda x: bar.update(1),
+            )
+            for cred in credentials
+        ]
+
+        for result in results:
+            result.wait()

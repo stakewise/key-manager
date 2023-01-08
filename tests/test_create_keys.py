@@ -47,10 +47,11 @@ class TestCreateKeys(unittest.TestCase):
             'get_latest_network_validator_public_keys',
             return_value=[],
         ), patch(
-            'key_manager.credentials.ExtendedAsyncBeacon.get_validators_by_ids',
-            return_value={'data': []},
+            'key_manager.credentials.get_validators',
+            return_value=[],
         ):
             result = runner.invoke(create_keys, args)
+            print(result.output)
             assert result.exit_code == 0
 
             output = f'''
