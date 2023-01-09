@@ -6,7 +6,7 @@ from click.testing import CliRunner
 from sw_utils.consensus import ValidatorStatus
 
 from key_manager.commands.cleanup_keys import cleanup_keys
-from key_manager.settings import MAINNET
+from key_manager.settings import GOERLI
 
 from .factories import faker
 
@@ -28,7 +28,7 @@ class TestCleanupKeys(unittest.TestCase):
         runner = CliRunner()
         args = [
             '--network',
-            MAINNET,
+            GOERLI,
             '--vault',
             vault,
             '--execution-endpoint',
@@ -48,7 +48,7 @@ class TestCleanupKeys(unittest.TestCase):
             return_value=random.randint(10000, 1000000),
         ), patch(
             'key_manager.commands.cleanup_keys.VaultContract.'
-            'get_last_validators_root_updated_event',
+            'get_last_validators_root_ipfs_hash',
             return_value='someipfshash',
         ), patch(
             'key_manager.commands.cleanup_keys.fetch_vault_deposit_data',

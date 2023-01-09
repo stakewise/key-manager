@@ -179,6 +179,7 @@ def export_deposit_data_json(credentials: list[Credential], filename: str) -> st
 
 
 def export_keystores(credentials: list[Credential], keystores_dir: str, password_file: str) -> None:
+    makedirs(path.abspath(keystores_dir), exist_ok=True)
     password = get_or_create_password_file(password_file)
     with click.progressbar(
         credentials,
