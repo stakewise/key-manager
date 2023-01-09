@@ -39,10 +39,10 @@ class TestCleanupKeys(unittest.TestCase):
             'https://example.com',
         ]
         with patch(
-            'key_manager.commands.create_configs.Web3signer.list_keys',
+            'key_manager.commands.cleanup_keys.Web3signer.list_keys',
             return_value=w3signer_public_keys,
         ), patch(
-            'key_manager.commands.create_configs.Web3signer.delete_keys',
+            'key_manager.commands.cleanup_keys.Web3signer.delete_keys',
         ) as delete_keys_mock, patch(
             'key_manager.commands.cleanup_keys.get_current_number',
             return_value=random.randint(10000, 1000000),
@@ -54,16 +54,18 @@ class TestCleanupKeys(unittest.TestCase):
             'key_manager.commands.cleanup_keys.fetch_vault_deposit_data',
             return_value=deposit_data_public_keys,
         ), patch(
-            'key_manager.credentials.ExtendedAsyncBeacon.get_validators_by_ids',
-            return_value={'data': consensus_data},
+            'key_manager.commands.cleanup_keys.get_validators',
+            return_value=consensus_data,
         ):
             result = runner.invoke(cleanup_keys, args)
 
             assert result.exit_code == 0
 
-            output = 'Checking validator keys:\t\t\n' \
-            'Found 2 unused keys, remove them from the Web3Signer? [Y/n]: \n' \
-            'Done. Deleted 2 unused keys from https://example.com.\n'
+            output = (
+                'Checking validator keys:\t\t\n'
+                'Found 2 unused keys, remove them from the Web3Signer? [Y/n]: \n'
+                'Done. Deleted 2 unused keys from https://example.com.\n'
+            )
 
             assert output.strip() == result.output.strip()
             delete_keys_mock.assert_called_once_with(w3signer_public_keys[3:])

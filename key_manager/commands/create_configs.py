@@ -84,7 +84,7 @@ def create_configs(
     if validator_index == total_validators - 1:
         validator_keys = web3signer_keys[start_index:]
     else:
-        validator_keys = web3signer_keys[start_index: start_index + keys_per_validator]
+        validator_keys = web3signer_keys[start_index : start_index + keys_per_validator]
 
     Path.mkdir(Path(output_dir), exist_ok=True, parents=True)
 
@@ -99,9 +99,7 @@ def create_configs(
 
     # teku/prysm
     signer_keys_filepath = str(Path(output_dir, SIGNER_KEYS_FILENAME))
-    _generate_signer_keys_config(
-        public_keys=validator_keys, filepath=signer_keys_filepath
-    )
+    _generate_signer_keys_config(public_keys=validator_keys, filepath=signer_keys_filepath)
 
     proposer_config_filepath = str(Path(output_dir, PROPOSER_CONFIG_FILENAME))
     _generate_proposer_config(

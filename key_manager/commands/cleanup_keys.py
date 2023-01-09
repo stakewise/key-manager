@@ -3,6 +3,7 @@ from eth_typing import HexStr
 from sw_utils import get_consensus_client, get_execution_client
 from sw_utils.consensus import EXITED_STATUSES
 
+from key_manager.consensus import get_validators
 from key_manager.contrib import async_command
 from key_manager.execution import VaultContract, get_current_number
 from key_manager.ipfs import fetch_vault_deposit_data
@@ -109,7 +110,7 @@ async def cleanup_keys(
             while len(public_keys_chunk) != chunk_size:
                 public_keys_chunk.append(current_keys[index])
                 index += 1
-            result = (await consensus_client.get_validators_by_ids(public_keys_chunk))['data']
+            result = await get_validators(consensus_client, public_keys_chunk)
             registered_validators = {item['validator']['pubkey']: item['status'] for item in result}
 
             for public_key in public_keys_chunk:
