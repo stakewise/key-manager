@@ -38,7 +38,7 @@ RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         # deps for installing poetry
         curl \
-        # deps for installing eth2.0-deposit-cli
+        # deps for installing staking-deposit-cli
         git \
         # deps for building python deps
         build-essential
