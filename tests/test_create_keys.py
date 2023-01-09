@@ -51,7 +51,6 @@ class TestCreateKeys(unittest.TestCase):
             return_value=[],
         ):
             result = runner.invoke(create_keys, args)
-            print(result.output)
             assert result.exit_code == 0
 
             output = f'''
