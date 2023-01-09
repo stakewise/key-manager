@@ -42,7 +42,7 @@ class VaultContract(BaseContract):
     abi_path = 'abis/IBaseVault.json'
 
     @backoff.on_exception(backoff.expo, Exception, max_time=15)
-    async def get_last_validators_root_updated_event(
+    async def get_last_validators_root_ipfs_hash(
         self, current_block: BlockNumber
     ) -> str | None:
         """Fetches the last rewards update."""
@@ -54,7 +54,7 @@ class VaultContract(BaseContract):
                 toBlock=to_block,
             )
             if events:
-                return events[:-1]['args']['validatorsIpfsHash']
+                return events[-1]['args']['validatorsIpfsHash']
             from_block, to_block = BlockNumber(to_block - chunk_size), BlockNumber(
                 to_block - chunk_size
             )

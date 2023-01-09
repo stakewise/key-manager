@@ -82,7 +82,7 @@ async def cleanup_keys(
         address=vault,
         execution_client=execution_client,
         genesis_block=NETWORKS[network].VAULT_CONTRACT_GENESIS_BLOCK,
-    ).get_last_validators_root_updated_event(current_block)
+    ).get_last_validators_root_ipfs_hash(current_block)
 
     if current_validator_ipfs_hash:
         deposit_data_keys = await fetch_vault_deposit_data(
