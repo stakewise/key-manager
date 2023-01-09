@@ -10,7 +10,7 @@ from staking_deposit.key_handling.key_derivation.mnemonic import get_mnemonic
 from key_manager import KEY_MANAGER_VERSION
 from key_manager.commands.create_keys import create_keys
 from key_manager.language import WORD_LISTS_PATH
-from key_manager.settings import MAINNET
+from key_manager.settings import GOERLI
 
 from .factories import faker
 
@@ -24,7 +24,7 @@ class TestCreateKeys(unittest.TestCase):
         runner = CliRunner()
         args = [
             '--network',
-            MAINNET,
+            GOERLI,
             '--mnemonic',
             f'"{mnemonic}"',
             '--count',
@@ -64,10 +64,10 @@ Deposit data saved to ./data/deposit_data.json file
             with open('./data/deposit_data.json', encoding='utf-8') as f:
                 data = json.load(f)
                 assert count == len(data)
-                assert data[0].get('network_name') == 'mainnet'
-                assert data[0].get('fork_version') == '00000000'
+                assert data[0].get('network_name') == 'goerli'
+                assert data[0].get('fork_version') == '00001020'
                 assert data[0].get('deposit_cli_version') == KEY_MANAGER_VERSION
-            with open('./data/keystore/password.txt', encoding='utf-8') as f:
+            with open('./data/keystores/password.txt', encoding='utf-8') as f:
                 assert len(f.readline()) == 20
 
-            assert len(os.listdir('./data/keystore')) == count + 1
+            assert len(os.listdir('./data/keystores')) == count + 1

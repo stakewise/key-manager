@@ -6,7 +6,7 @@ from click.testing import CliRunner
 from sw_utils.consensus import ValidatorStatus
 
 from key_manager.commands.cleanup_keys import cleanup_keys
-from key_manager.settings import MAINNET
+from key_manager.settings import GOERLI
 
 from .factories import faker
 
@@ -28,7 +28,7 @@ class TestCleanupKeys(unittest.TestCase):
         runner = CliRunner()
         args = [
             '--network',
-            MAINNET,
+            GOERLI,
             '--vault',
             vault,
             '--execution-endpoint',

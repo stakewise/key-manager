@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import click
 from eth_typing import BlockNumber, HexAddress
 from sw_utils import get_consensus_client, get_execution_client
@@ -18,6 +20,14 @@ from key_manager.password import generate_password
 from key_manager.settings import AVAILABLE_NETWORKS, IPFS_ENDPOINTS, MAINNET, NETWORKS
 from key_manager.validators import validate_eth_address, validate_mnemonic
 from key_manager.web3signer import Web3signer
+
+
+# pylint: disable-next=unused-argument
+def validate_empty_dir(ctx, param, value):
+    path = Path(value)
+    if path.is_dir() and any(path.iterdir()):
+        raise click.BadParameter(f'Keystores directory({value}) should be empty')
+    return value
 
 
 @click.option(
@@ -76,20 +86,21 @@ from key_manager.web3signer import Web3signer
     default='./data/deposit_data.json',
 )
 @click.option(
-    '--keystores-dir',
+    '--keystores',
     required=False,
     help='The directory to store the validator keys in the EIP-2335 standard.'
     ' It is ignored when web3signer-endpoint is used. Defaults to ./data/keystores.',
-    default='./data/keystore',
+    default='./data/keystores',
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
+    callback=validate_empty_dir,
 )
 @click.option(
     '--password-file',
     required=False,
     help='The file to store randomly generated password for encrypting the keystores. '
     'It is ignored when web3signer-endpoint is used. '
-    'Defaults to ./<keystores-dir>/password.txt.',
-    default='./data/keystore/password.txt',
+    'Defaults to ./data/keystores/password.txt.',
+    default='./data/keystores/password.txt',
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
 )
 @click.option(
@@ -115,7 +126,7 @@ async def create_keys(
     consensus_endpoint: str,
     ipfs_endpoints: list[str],
     deposit_data_file: str,
-    keystores_dir: str,
+    keystores: str,
     password_file: str,
     web3signer_endpoint: str,
     no_confirm: bool,
@@ -162,7 +173,7 @@ async def create_keys(
                 abort=True,
             )
 
-        keystores, passwords = [], []
+        keys, passwords = [], []
         with click.progressbar(
             credentials,
             label='Generating deposit data keystores\t\t',
@@ -171,17 +182,17 @@ async def create_keys(
         ) as _credentials:
             for credential in _credentials:
                 password = generate_password()
-                keystores.append(credential.signing_keystore(password).as_json())
+                keys.append(credential.signing_keystore(password).as_json())
                 passwords.append(password)
 
         Web3signer(web3signer_endpoint).upload_keys(
-            keystores=keystores,
+            keystores=keys,
             passwords=passwords,
         )
 
     else:
         export_keystores(
-            credentials=credentials, keystores_dir=keystores_dir, password_file=password_file
+            credentials=credentials, keystores_dir=keystores, password_file=password_file
         )
 
     click.clear()
