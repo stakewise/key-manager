@@ -40,7 +40,7 @@ class TestCreateKeys(unittest.TestCase):
             'key_manager.commands.create_keys.get_current_number',
             return_value=random.randint(10000, 1000000),
         ), patch(
-            'key_manager.commands.create_keys.VaultContract.get_last_validators_root_updated_event',
+            'key_manager.commands.create_keys.VaultContract.get_last_validators_root_ipfs_hash',
             return_value=None,
         ), patch(
             'key_manager.commands.create_keys.ValidatorRegistryContract.'

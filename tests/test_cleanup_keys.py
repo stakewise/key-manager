@@ -48,7 +48,7 @@ class TestCleanupKeys(unittest.TestCase):
             return_value=random.randint(10000, 1000000),
         ), patch(
             'key_manager.commands.cleanup_keys.VaultContract.'
-            'get_last_validators_root_updated_event',
+            'get_last_validators_root_ipfs_hash',
             return_value='someipfshash',
         ), patch(
             'key_manager.commands.cleanup_keys.fetch_vault_deposit_data',
