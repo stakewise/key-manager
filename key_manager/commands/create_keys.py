@@ -17,7 +17,7 @@ from key_manager.execution import (
 )
 from key_manager.ipfs import fetch_vault_deposit_data
 from key_manager.password import generate_password
-from key_manager.settings import AVAILABLE_NETWORKS, IPFS_ENDPOINTS, MAINNET, NETWORKS
+from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, IPFS_ENDPOINTS, NETWORKS
 from key_manager.validators import validate_eth_address, validate_mnemonic
 from key_manager.web3signer import Web3signer
 
@@ -32,7 +32,7 @@ def validate_empty_dir(ctx, param, value):
 
 @click.option(
     '--network',
-    default=MAINNET,
+    default=GOERLI,
     help='The network to generate the deposit data for',
     prompt='Enter the network name',
     type=click.Choice(

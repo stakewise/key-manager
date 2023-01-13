@@ -7,14 +7,14 @@ from key_manager.consensus import get_validators
 from key_manager.contrib import async_command
 from key_manager.execution import VaultContract, get_current_number
 from key_manager.ipfs import fetch_vault_deposit_data
-from key_manager.settings import AVAILABLE_NETWORKS, IPFS_ENDPOINTS, MAINNET, NETWORKS
+from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, IPFS_ENDPOINTS, NETWORKS
 from key_manager.validators import validate_eth_address
 from key_manager.web3signer import Web3signer
 
 
 @click.option(
     '--network',
-    default=MAINNET,
+    default=GOERLI,
     help='The network to generate the deposit data for',
     prompt='Enter the network name',
     type=click.Choice(
