@@ -76,7 +76,7 @@ class Credential:
     def save_signing_keystore(self, password: str, folder: str) -> str:
         keystore = self.encrypt_signing_keystore(password)
         filefolder = path.join(
-            folder, f'keystore-{keystore.path.replace("/", "_")}-{time.time()}.json'
+            folder, f'keystore-{keystore.path.replace("/", "_")}-{int(time.time())}.json'
         )
         keystore.save(filefolder)
         return filefolder
