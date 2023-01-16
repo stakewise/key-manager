@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "key-manager"
-version = "0.1.0"
+version = "0.1.1"
 description = "StakeWise Operator CLI is used to generate and manage ETH2 validator keys."
 authors = ["StakeWise Labs <info@stakewise.io>"]
 readme = "README.md"
@@ -47,8 +47,7 @@ good-names = ["bar", "i", "el", "e", "w", "f", "w3"]
 extension-pkg-whitelist = "pydantic"
 
 [tool.flake8]
-max-line-length = 100
-select = ["E121"]
+extend-ignore = ["E203", "E501"]  # line length will be checked by pylint
 
 [tool.mypy]
 ignore_missing_imports = true
