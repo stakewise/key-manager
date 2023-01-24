@@ -13,11 +13,18 @@ from key_manager.credentials import (
 from key_manager.execution import (
     ValidatorRegistryContract,
     VaultContract,
+    generate_vault_address,
     get_current_number,
 )
 from key_manager.ipfs import fetch_vault_deposit_data
 from key_manager.password import generate_password
-from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, IPFS_ENDPOINTS, NETWORKS
+from key_manager.settings import (
+    AVAILABLE_NETWORKS,
+    GOERLI,
+    IPFS_ENDPOINTS,
+    NETWORKS,
+    VAULT_TYPE,
+)
 from key_manager.validators import validate_eth_address, validate_mnemonic
 from key_manager.web3signer import Web3signer
 
@@ -56,9 +63,25 @@ def validate_empty_dir(ctx, param, value):
 @click.option(
     '--vault',
     help='The vault address for which the validator keys are generated.',
-    prompt='Enter the vault address for which the validator keys are generated',
     type=str,
     callback=validate_eth_address,
+    required=False,
+)
+@click.option(
+    '--admin',
+    help='The vault admin address.',
+    type=str,
+    required=False,
+)
+@click.option(
+    '--vault-type',
+    help='The vault type, private or public.',
+    type=click.Choice(
+        [opt.value for opt in VAULT_TYPE],
+        case_sensitive=False,
+    ),
+    required=False,
+    prompt=False,
 )
 @click.option(
     '--execution-endpoint',
@@ -122,6 +145,8 @@ async def create_keys(
     mnemonic: str,
     count: int,
     vault: HexAddress,
+    admin: HexAddress,
+    vault_type: str,
     execution_endpoint: str,
     consensus_endpoint: str,
     ipfs_endpoints: list[str],
@@ -132,6 +157,10 @@ async def create_keys(
     no_confirm: bool,
 ) -> None:
     execution_client = get_execution_client(execution_endpoint, is_poa=NETWORKS[network].IS_POA)
+    if not vault:
+        vault = await generate_vault_address(
+            admin=admin, vault_type=vault_type, execution_client=execution_client, network=network
+        )
 
     current_block = await get_current_number(execution_client=execution_client)
     fetch_from_block = BlockNumber(current_block - NETWORKS[network].BEACON_SYNC_BLOCK_DISTANCE)

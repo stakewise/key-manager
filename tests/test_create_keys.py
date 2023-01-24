@@ -71,3 +71,52 @@ Deposit data saved to ./data/deposit_data.json file
                 assert len(f.readline()) == 20
 
             assert len(os.listdir('./data/keystores')) == count + 1
+
+    def test_vault_address_calculation(self):
+        admin, vault = faker.eth_address(), faker.eth_address()
+        count = 5
+        runner = CliRunner()
+        args = [
+            '--network',
+            GOERLI,
+            '--mnemonic',
+            f'"{mnemonic}"',
+            '--count',
+            count,
+            '--admin',
+            admin,
+            '--vault-type',
+            'public',
+            '--execution-endpoint',
+            'https://example.com',
+            '--consensus-endpoint',
+            'https://example.com',
+        ]
+        with runner.isolated_filesystem(), patch(
+                'key_manager.commands.create_keys.get_current_number',
+                return_value=random.randint(10000, 1000000),
+        ), patch(
+            'key_manager.commands.create_keys.VaultContract.get_last_validators_root_ipfs_hash',
+            return_value=None,
+        ), patch(
+            'key_manager.commands.create_keys.ValidatorRegistryContract.'
+            'get_latest_network_validator_public_keys',
+            return_value=[],
+        ), patch(
+            'key_manager.credentials.get_validators',
+            return_value=[],
+        ), patch(
+            'key_manager.execution.VaultFactoryContract.compute_addresses',
+            return_value=[vault],
+        ):
+            result = runner.invoke(create_keys, args)
+            assert result.exit_code == 0
+
+            output = f'''
+            Creating validator keys:\t\t
+Generating deposit data json\t\t
+Exporting validator keystores\t\t
+Done. Generated 5 keys for {vault} vault.
+Deposit data saved to ./data/deposit_data.json file
+    '''
+            assert output.strip() == result.output.strip()
