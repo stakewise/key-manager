@@ -64,9 +64,9 @@ NETWORKS = {
     GOERLI: NetworkConfig(
         PRIVATE_VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0xDBF4d2637a4B9b272A1A43483B145A24322Da1Ae'
+            '0x3bedaA84b063AC07d4cD207aF70f4634613B5619'
         ),
-        VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(8210055),
+        VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(8368607),
         VALIDATORS_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b'
         ),
