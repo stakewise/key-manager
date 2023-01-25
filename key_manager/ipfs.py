@@ -3,11 +3,13 @@ from eth_typing import HexStr
 from sw_utils import IpfsFetchClient
 from web3 import Web3
 
+from key_manager.settings import DEFAULT_RETRY_TIME
+
 BLS_PUBLIC_KEY_LENGTH = 48
 BLS_SIGNATURE_LENGTH = 96
 
 
-@backoff.on_exception(backoff.expo, Exception, max_time=15)
+@backoff.on_exception(backoff.expo, Exception, max_time=DEFAULT_RETRY_TIME)
 async def fetch_vault_deposit_data(ipfs_endpoints: list[str], ipfs_hash: str) -> list[HexStr]:
     """Fetches deposit data from the IPFS."""
     ipfs_data = await IpfsFetchClient(ipfs_endpoints).fetch_bytes(ipfs_hash)

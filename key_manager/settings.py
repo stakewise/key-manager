@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from enum import Enum
 
 from ens.constants import EMPTY_ADDR_HEX
 from eth_typing import BlockNumber, ChecksumAddress, HexStr
@@ -17,8 +18,14 @@ GOERLI = 'goerli'
 GNOSIS = 'gnosis'
 
 
+class VAULT_TYPE(Enum):
+    PRIVATE = 'private'
+    PUBLIC = 'public'
+
+
 @dataclass
 class NetworkConfig:
+    VAULT_FACTORY_CONTRACT_ADDRESS: ChecksumAddress
     VAULT_CONTRACT_GENESIS_BLOCK: BlockNumber
     VALIDATORS_REGISTRY_CONTRACT_ADDRESS: ChecksumAddress
     VALIDATORS_REGISTRY_GENESIS_BLOCK: BlockNumber
@@ -35,6 +42,7 @@ class NetworkConfig:
 
 NETWORKS = {
     MAINNET: NetworkConfig(
+        VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(0),
         VALIDATORS_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         VALIDATORS_REGISTRY_GENESIS_BLOCK=BlockNumber(0),
@@ -45,7 +53,10 @@ NETWORKS = {
         IS_POA=True,
     ),
     GOERLI: NetworkConfig(
-        VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(8210055),
+        VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(
+            '0x3bedaA84b063AC07d4cD207aF70f4634613B5619'
+        ),
+        VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(8368607),
         VALIDATORS_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0xff50ed3d0ec03aC01D4C79aAd74928BFF48a7b2b'
         ),
@@ -57,6 +68,7 @@ NETWORKS = {
         IS_POA=False,
     ),
     GNOSIS: NetworkConfig(
+        VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(0),
         VALIDATORS_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         VALIDATORS_REGISTRY_GENESIS_BLOCK=BlockNumber(0),
@@ -70,3 +82,5 @@ NETWORKS = {
 
 # Alias
 AVAILABLE_NETWORKS = [GOERLI]
+
+DEFAULT_RETRY_TIME = 30

@@ -2,9 +2,13 @@ import json
 import os
 
 import backoff
-from eth_typing import BlockNumber, ChecksumAddress, HexStr
+import click
+from eth_typing import BlockNumber, ChecksumAddress, HexAddress, HexStr
+from eth_utils import is_address, to_checksum_address
 from web3 import Web3
 from web3.contract import AsyncContract
+
+from key_manager.settings import DEFAULT_RETRY_TIME, NETWORKS, VAULT_TYPE
 
 
 class BaseContract:
@@ -12,7 +16,7 @@ class BaseContract:
     address: ChecksumAddress
     genesis_block: BlockNumber
 
-    def __init__(self, genesis_block, address, execution_client):
+    def __init__(self, address, execution_client, genesis_block=BlockNumber(0)):
         self.address = address
         self.execution_client = execution_client
         self.genesis_block = genesis_block
@@ -28,7 +32,7 @@ class BaseContract:
 class ValidatorRegistryContract(BaseContract):
     abi_path = 'abis/IValidatorsRegistry.json'
 
-    @backoff.on_exception(backoff.expo, Exception, max_time=15)
+    @backoff.on_exception(backoff.expo, Exception, max_time=DEFAULT_RETRY_TIME)
     async def get_latest_network_validator_public_keys(
         self, from_block: BlockNumber, to_block: BlockNumber
     ) -> set[HexStr]:
@@ -38,13 +42,24 @@ class ValidatorRegistryContract(BaseContract):
         return {Web3.to_hex(event['args']['pubkey']) for event in events}
 
 
-class VaultContract(BaseContract):
-    abi_path = 'abis/IBaseVault.json'
+class VaultFactoryContract(BaseContract):
+    abi_path = 'abis/IEthVaultFactory.json'
 
-    @backoff.on_exception(backoff.expo, Exception, max_time=15)
-    async def get_last_validators_root_ipfs_hash(
-        self, current_block: BlockNumber
-    ) -> str | None:
+    @backoff.on_exception(backoff.expo, Exception, max_time=DEFAULT_RETRY_TIME)
+    async def compute_addresses(
+        self, admin_address: ChecksumAddress, is_private: bool
+    ) -> ChecksumAddress:
+        address, _ = await self.contract.functions.computeAddresses(
+            admin_address, is_private
+        ).call()
+        return to_checksum_address(address)
+
+
+class VaultContract(BaseContract):
+    abi_path = 'abis/IEthVault.json'
+
+    @backoff.on_exception(backoff.expo, Exception, max_time=DEFAULT_RETRY_TIME)
+    async def get_last_validators_root_ipfs_hash(self, current_block: BlockNumber) -> str | None:
         """Fetches the last rewards update."""
         chunk_size = 1000
         from_block, to_block = current_block - chunk_size, current_block
@@ -62,7 +77,34 @@ class VaultContract(BaseContract):
         return None
 
 
-@backoff.on_exception(backoff.expo, Exception, max_time=15)
+@backoff.on_exception(backoff.expo, Exception, max_time=DEFAULT_RETRY_TIME)
 async def get_current_number(execution_client) -> BlockNumber:
     """Fetches the fork safe block number."""
     return await execution_client.eth.get_block_number()  # type: ignore
+
+
+async def generate_vault_address(
+    admin: HexAddress | None, vault_type: str | None, execution_client: Web3, network: str
+) -> ChecksumAddress:
+    if vault_type and admin:
+        try:
+            is_private = bool(vault_type == VAULT_TYPE.PRIVATE.value)
+            return await VaultFactoryContract(
+                address=NETWORKS[network].VAULT_FACTORY_CONTRACT_ADDRESS,
+                execution_client=execution_client,
+            ).compute_addresses(
+                admin_address=Web3.to_checksum_address(admin), is_private=is_private
+            )
+
+        except BaseException as e:
+            raise click.ClickException('Failed to generate the vault address') from e
+    elif vault_type or admin:
+        raise click.BadParameter(
+            'Provide only the vault address or combination '
+            'of the admin address and the vault type'
+        )
+    else:
+        vault = click.prompt('Enter the vault address for which the validator keys are generated')
+        if is_address(vault):
+            return to_checksum_address(vault)
+        raise click.BadParameter('Invalid Ethereum address')

@@ -12,6 +12,8 @@ def validate_mnemonic(ctx, param, value):
 
 # pylint: disable-next=unused-argument
 def validate_eth_address(ctx, param, value):
+    if not value:
+        return None
     try:
         if is_address(value):
             return to_checksum_address(value)
