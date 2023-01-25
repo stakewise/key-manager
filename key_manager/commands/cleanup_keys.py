@@ -1,23 +1,13 @@
 import click
-from eth_typing import HexAddress, HexStr
+from eth_typing import HexStr
 from sw_utils import get_consensus_client, get_execution_client
 from sw_utils.consensus import EXITED_STATUSES
 
 from key_manager.consensus import get_validators
 from key_manager.contrib import async_command
-from key_manager.execution import (
-    VaultContract,
-    generate_vault_address,
-    get_current_number,
-)
+from key_manager.execution import VaultContract, get_current_number
 from key_manager.ipfs import fetch_vault_deposit_data
-from key_manager.settings import (
-    AVAILABLE_NETWORKS,
-    GOERLI,
-    IPFS_ENDPOINTS,
-    NETWORKS,
-    VAULT_TYPE,
-)
+from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, IPFS_ENDPOINTS, NETWORKS
 from key_manager.validators import validate_eth_address
 from key_manager.web3signer import Web3signer
 
@@ -35,25 +25,9 @@ from key_manager.web3signer import Web3signer
 @click.option(
     '--vault',
     help='The vault address for which the validator keys are generated.',
+    prompt='Enter the vault address for which the validator keys are generated',
     type=str,
     callback=validate_eth_address,
-    required=False,
-)
-@click.option(
-    '--admin',
-    help='The vault admin address.',
-    type=str,
-    required=False,
-)
-@click.option(
-    '--vault-type',
-    help='The vault type, private or public.',
-    type=click.Choice(
-        [e.value for e in VAULT_TYPE],
-        case_sensitive=False,
-    ),
-    required=False,
-    prompt=False,
 )
 @click.option(
     '--execution-endpoint',
@@ -90,9 +64,7 @@ from key_manager.web3signer import Web3signer
 @async_command
 async def cleanup_keys(
     network: str,
-    vault: HexAddress,
-    admin: HexAddress,
-    vault_type: str,
+    vault: str,
     execution_endpoint: str,
     consensus_endpoint: str,
     ipfs_endpoints: list[str],
@@ -102,10 +74,6 @@ async def cleanup_keys(
     execution_client = get_execution_client(execution_endpoint, is_poa=NETWORKS[network].IS_POA)
     consensus_client = get_consensus_client(consensus_endpoint)
 
-    if not vault:
-        vault = await generate_vault_address(
-            admin=admin, vault_type=vault_type, execution_client=execution_client, network=network
-        )
     web3signer = Web3signer(web3signer_endpoint)
     current_block = await get_current_number(execution_client=execution_client)
 

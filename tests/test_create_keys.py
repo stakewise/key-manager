@@ -107,7 +107,7 @@ Deposit data saved to ./data/deposit_data.json file
             return_value=[],
         ), patch(
             'key_manager.execution.VaultFactoryContract.compute_addresses',
-            return_value=[vault],
+            return_value=vault,
         ):
             result = runner.invoke(create_keys, args)
             assert result.exit_code == 0

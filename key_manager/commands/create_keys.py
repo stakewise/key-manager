@@ -75,7 +75,7 @@ def validate_empty_dir(ctx, param, value):
 )
 @click.option(
     '--vault-type',
-    help='The vault type, private or public.',
+    help='The vault type.',
     type=click.Choice(
         [opt.value for opt in VAULT_TYPE],
         case_sensitive=False,
@@ -144,9 +144,9 @@ async def create_keys(
     network: str,
     mnemonic: str,
     count: int,
-    vault: HexAddress,
-    admin: HexAddress,
-    vault_type: str,
+    vault: HexAddress | None,
+    admin: HexAddress | None,
+    vault_type: str | None,
     execution_endpoint: str,
     consensus_endpoint: str,
     ipfs_endpoints: list[str],

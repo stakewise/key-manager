@@ -25,8 +25,7 @@ class VAULT_TYPE(Enum):
 
 @dataclass
 class NetworkConfig:
-    PRIVATE_VAULT_FACTORY_CONTRACT_ADDRESS: ChecksumAddress
-    PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS: ChecksumAddress
+    VAULT_FACTORY_CONTRACT_ADDRESS: ChecksumAddress
     VAULT_CONTRACT_GENESIS_BLOCK: BlockNumber
     VALIDATORS_REGISTRY_CONTRACT_ADDRESS: ChecksumAddress
     VALIDATORS_REGISTRY_GENESIS_BLOCK: BlockNumber
@@ -40,18 +39,10 @@ class NetworkConfig:
     def DEPOSIT_AMOUNT_GWEI(self) -> int:
         return int(Web3.from_wei(self.DEPOSIT_AMOUNT, 'gwei'))
 
-    def get_vault_factory_contract_addresses(self, vault_type: str) -> ChecksumAddress:
-        mapping = {
-            VAULT_TYPE.PRIVATE.value: self.PRIVATE_VAULT_FACTORY_CONTRACT_ADDRESS,
-            VAULT_TYPE.PUBLIC.value: self.PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS,
-        }
-        return mapping[vault_type]
-
 
 NETWORKS = {
     MAINNET: NetworkConfig(
-        PRIVATE_VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
-        PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
+        VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(0),
         VALIDATORS_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         VALIDATORS_REGISTRY_GENESIS_BLOCK=BlockNumber(0),
@@ -62,8 +53,7 @@ NETWORKS = {
         IS_POA=True,
     ),
     GOERLI: NetworkConfig(
-        PRIVATE_VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
-        PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(
+        VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(
             '0x3bedaA84b063AC07d4cD207aF70f4634613B5619'
         ),
         VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(8368607),
@@ -78,8 +68,7 @@ NETWORKS = {
         IS_POA=False,
     ),
     GNOSIS: NetworkConfig(
-        PRIVATE_VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
-        PUBLIC_VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
+        VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         VAULT_CONTRACT_GENESIS_BLOCK=BlockNumber(0),
         VALIDATORS_REGISTRY_CONTRACT_ADDRESS=Web3.to_checksum_address(EMPTY_ADDR_HEX),
         VALIDATORS_REGISTRY_GENESIS_BLOCK=BlockNumber(0),
@@ -93,3 +82,5 @@ NETWORKS = {
 
 # Alias
 AVAILABLE_NETWORKS = [GOERLI]
+
+DEFAULT_RETRY_TIME = 30
