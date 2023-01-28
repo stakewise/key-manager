@@ -1,4 +1,5 @@
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from click.testing import CliRunner
@@ -28,8 +29,10 @@ class TestCleanupKeys(unittest.TestCase):
             'https://example.com',
             '--web3signer-endpoint',
             'https://example.com',
+            '--deposit-data-file',
+            './deposit_data.json'
         ]
-        with patch(
+        with runner.isolated_filesystem(), patch(
             'key_manager.commands.cleanup_keys.Web3signer.list_keys',
             return_value=w3signer_public_keys,
         ), patch(
@@ -41,6 +44,7 @@ class TestCleanupKeys(unittest.TestCase):
             'key_manager.commands.cleanup_keys.get_validators',
             return_value=consensus_data,
         ):
+            Path('./deposit_data.json').touch()
             result = runner.invoke(cleanup_keys, args)
 
             assert result.exit_code == 0
