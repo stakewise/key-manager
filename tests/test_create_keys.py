@@ -31,34 +31,21 @@ class TestCreateKeys(unittest.TestCase):
             count,
             '--vault',
             vault,
-            '--execution-endpoint',
-            'https://example.com',
-            '--consensus-endpoint',
-            'https://example.com',
+            '--mnemonic-start-index',
+            0
         ]
-        with runner.isolated_filesystem(), patch(
-            'key_manager.commands.create_keys.get_current_number',
-            return_value=random.randint(10000, 1000000),
-        ), patch(
-            'key_manager.commands.create_keys.VaultContract.get_last_validators_root_ipfs_hash',
-            return_value=None,
-        ), patch(
-            'key_manager.commands.create_keys.ValidatorRegistryContract.'
-            'get_latest_network_validator_public_keys',
-            return_value=[],
-        ), patch(
-            'key_manager.credentials.get_validators',
-            return_value=[],
-        ):
+        with runner.isolated_filesystem():
             result = runner.invoke(create_keys, args)
             assert result.exit_code == 0
 
             output = f'''
             Creating validator keys:\t\t
-Generating deposit data json\t\t
+Generating deposit data JSON\t\t
 Exporting validator keystores\t\t
 Done. Generated 5 keys for {vault} vault.
+Keystores saved to ./data/keystores file
 Deposit data saved to ./data/deposit_data.json file
+Next mnemonic start index saved to ./mnemonic_next_index.txt file
 '''
             assert output.strip() == result.output.strip()
             with open('./data/deposit_data.json', encoding='utf-8') as f:
@@ -69,6 +56,8 @@ Deposit data saved to ./data/deposit_data.json file
                 assert data[0].get('deposit_cli_version') == KEY_MANAGER_VERSION
             with open('./data/keystores/password.txt', encoding='utf-8') as f:
                 assert len(f.readline()) == 20
+            with open('./mnemonic_next_index.txt', encoding='utf-8') as f:
+                assert int(f.read()) == 5
 
             assert len(os.listdir('./data/keystores')) == count + 1
 
@@ -89,23 +78,10 @@ Deposit data saved to ./data/deposit_data.json file
             'public',
             '--execution-endpoint',
             'https://example.com',
-            '--consensus-endpoint',
-            'https://example.com',
+            '--mnemonic-start-index',
+            0
         ]
         with runner.isolated_filesystem(), patch(
-                'key_manager.commands.create_keys.get_current_number',
-                return_value=random.randint(10000, 1000000),
-        ), patch(
-            'key_manager.commands.create_keys.VaultContract.get_last_validators_root_ipfs_hash',
-            return_value=None,
-        ), patch(
-            'key_manager.commands.create_keys.ValidatorRegistryContract.'
-            'get_latest_network_validator_public_keys',
-            return_value=[],
-        ), patch(
-            'key_manager.credentials.get_validators',
-            return_value=[],
-        ), patch(
             'key_manager.execution.VaultFactoryContract.compute_addresses',
             return_value=vault,
         ):
@@ -114,9 +90,11 @@ Deposit data saved to ./data/deposit_data.json file
 
             output = f'''
             Creating validator keys:\t\t
-Generating deposit data json\t\t
+Generating deposit data JSON\t\t
 Exporting validator keystores\t\t
 Done. Generated 5 keys for {vault} vault.
+Keystores saved to ./data/keystores file
 Deposit data saved to ./data/deposit_data.json file
+Next mnemonic start index saved to ./mnemonic_next_index.txt file
     '''
             assert output.strip() == result.output.strip()

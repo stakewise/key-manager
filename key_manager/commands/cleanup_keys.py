@@ -1,5 +1,3 @@
-import json
-
 import click
 from eth_typing import HexStr
 from sw_utils import get_consensus_client
@@ -7,6 +5,7 @@ from sw_utils.consensus import EXITED_STATUSES
 
 from key_manager.consensus import get_validators
 from key_manager.contrib import async_command
+from key_manager.credentials import load_deposit_data_pub_keys
 from key_manager.web3signer import Web3signer
 
 
@@ -46,10 +45,7 @@ async def cleanup_keys(
 
     web3signer = Web3signer(web3signer_endpoint)
 
-    with open(deposit_data_file, 'r', encoding='utf-8') as f:
-        deposit_data = json.load(f)
-
-    deposit_data_keys = [data['pubkey'] for data in deposit_data]
+    deposit_data_keys = load_deposit_data_pub_keys(deposit_data_file)
     removed_keys = []
 
     current_keys = web3signer.list_keys()

@@ -9,6 +9,7 @@ from os import makedirs, path
 import click
 import milagro_bls_binding as bls
 from eth_typing import HexAddress, HexStr, BLSPrivateKey
+from eth_utils import add_0x_prefix
 from py_ecc.bls import G2ProofOfPossession
 from staking_deposit.key_handling.key_derivation.mnemonic import get_seed
 from staking_deposit.key_handling.key_derivation.path import path_to_nodes
@@ -220,3 +221,10 @@ def export_keystores(credentials: list[Credential], keystores_dir: str, password
 
         for result in results:
             result.wait()
+
+
+def load_deposit_data_pub_keys(deposit_data_file: str) -> list[HexStr]:
+    with open(deposit_data_file, 'r', encoding='utf-8') as f:
+        deposit_data = json.load(f)
+
+    return [add_0x_prefix(data['pubkey']) for data in deposit_data]
