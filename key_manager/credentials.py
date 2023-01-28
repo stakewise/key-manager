@@ -8,7 +8,7 @@ from os import makedirs, path
 
 import click
 import milagro_bls_binding as bls
-from eth_typing import HexAddress, HexStr, BLSPrivateKey
+from eth_typing import BLSPrivateKey, HexAddress, HexStr
 from eth_utils import add_0x_prefix
 from py_ecc.bls import G2ProofOfPossession
 from staking_deposit.key_handling.key_derivation.mnemonic import get_seed

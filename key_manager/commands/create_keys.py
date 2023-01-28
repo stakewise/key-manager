@@ -2,7 +2,7 @@ from pathlib import Path
 
 import click
 from eth_typing import HexAddress
-from eth_utils import to_checksum_address, is_address
+from eth_utils import is_address, to_checksum_address
 from sw_utils import get_execution_client
 
 from key_manager.contrib import async_command
@@ -11,16 +11,9 @@ from key_manager.credentials import (
     export_keystores,
     generate_credentials,
 )
-from key_manager.execution import (
-    generate_vault_address,
-)
+from key_manager.execution import generate_vault_address
 from key_manager.password import get_or_create_password_file
-from key_manager.settings import (
-    AVAILABLE_NETWORKS,
-    GOERLI,
-    NETWORKS,
-    VAULT_TYPE,
-)
+from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, NETWORKS, VAULT_TYPE
 from key_manager.validators import validate_eth_address, validate_mnemonic
 from key_manager.web3signer import Web3signer
 
@@ -34,7 +27,7 @@ def validate_empty_dir(ctx, param, value):
 
 
 def greenify(value):
-    return click.style(value, bold=True, fg="green")
+    return click.style(value, bold=True, fg='green')
 
 
 @click.option(
@@ -122,11 +115,11 @@ def greenify(value):
     '--mnemonic-start-index',
     required=False,
     help="The index of the first validator's keys you wish to generate."
-    " If this is your first time generating keys with this mnemonic, use 0."
-    " If you have generated keys using this mnemonic before,"
-    " add --mnemonic-next-index-file flag or specify the next index from which you want"
+    ' If this is your first time generating keys with this mnemonic, use 0.'
+    ' If you have generated keys using this mnemonic before,'
+    ' add --mnemonic-next-index-file flag or specify the next index from which you want'
     " to start generating keys from (eg, if you've generated 4 keys before (keys #0, #1, #2, #3),"
-    " then enter 4 here.",
+    ' then enter 4 here.',
     type=click.IntRange(min=0),
 )
 @click.option(

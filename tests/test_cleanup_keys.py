@@ -5,7 +5,7 @@ from click.testing import CliRunner
 from sw_utils.consensus import ValidatorStatus
 
 from key_manager.commands.cleanup_keys import cleanup_keys
-from key_manager.settings import GOERLI
+
 from .factories import faker
 
 
