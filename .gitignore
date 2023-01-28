@@ -6,3 +6,6 @@ dist
 local.env
 *.env
 /key_manager/data/
+/data/
+.DS_Store
+/mnemonic_next_index.txt
