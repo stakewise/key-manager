@@ -1,6 +1,5 @@
 import json
 import os
-import random
 import unittest
 from unittest.mock import patch
 
