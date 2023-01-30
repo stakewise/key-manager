@@ -37,7 +37,7 @@ NETWORKS = {
     ),
     GOERLI: NetworkConfig(
         VAULT_FACTORY_CONTRACT_ADDRESS=Web3.to_checksum_address(
-            '0x3bedaA84b063AC07d4cD207aF70f4634613B5619'
+            '0xA717F81a7e011433EB2d7F5e514D7f500Cd307E4'
         ),
         GENESIS_FORK_VERSION=Web3.to_bytes(hexstr=HexStr('0x00001020')),
         DEPOSIT_AMOUNT=Web3.to_wei(32, 'ether'),
