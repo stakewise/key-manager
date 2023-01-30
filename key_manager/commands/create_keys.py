@@ -1,7 +1,8 @@
 from pathlib import Path
 
 import click
-from eth_typing import BlockNumber, HexAddress
+from eth_typing import HexAddress
+from eth_utils import is_address, to_checksum_address
 from sw_utils import get_execution_client
 
 from key_manager.contrib import async_command
@@ -10,21 +11,9 @@ from key_manager.credentials import (
     export_keystores,
     generate_credentials,
 )
-from key_manager.execution import (
-    ValidatorRegistryContract,
-    VaultContract,
-    generate_vault_address,
-    get_current_number,
-)
-from key_manager.ipfs import fetch_vault_deposit_data
-from key_manager.password import generate_password
-from key_manager.settings import (
-    AVAILABLE_NETWORKS,
-    GOERLI,
-    IPFS_ENDPOINTS,
-    NETWORKS,
-    VAULT_TYPE,
-)
+from key_manager.execution import generate_vault_address
+from key_manager.password import get_or_create_password_file
+from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, NETWORKS, VAULT_TYPE
 from key_manager.validators import validate_eth_address, validate_mnemonic
 from key_manager.web3signer import Web3signer
 
@@ -33,14 +22,18 @@ from key_manager.web3signer import Web3signer
 def validate_empty_dir(ctx, param, value):
     path = Path(value)
     if path.is_dir() and any(path.iterdir()):
-        raise click.BadParameter(f'Keystores directory({value}) should be empty')
+        raise click.BadParameter(f'Keystores directory({value}) must be empty')
     return value
+
+
+def greenify(value):
+    return click.style(value, bold=True, fg='green')
 
 
 @click.option(
     '--network',
     default=GOERLI,
-    help='The network to generate the deposit data for',
+    help='The network to generate the deposit data for.',
     prompt='Enter the network name',
     type=click.Choice(
         AVAILABLE_NETWORKS,
@@ -58,7 +51,7 @@ def validate_empty_dir(ctx, param, value):
     '--count',
     help='The number of the validator keys to generate.',
     prompt='Enter the number of the validator keys to generate',
-    type=click.IntRange(min=1, max=10000),
+    type=click.IntRange(min=1),
 )
 @click.option(
     '--vault',
@@ -85,26 +78,13 @@ def validate_empty_dir(ctx, param, value):
 )
 @click.option(
     '--execution-endpoint',
-    help='The endpoint of the execution node.',
-    prompt='Enter the endpoint of the execution node',
-    type=str,
-)
-@click.option(
-    '--consensus-endpoint',
-    help='The endpoint of the consensus node.',
-    prompt='Enter the endpoint of the consensus node',
-    type=str,
-)
-@click.option(
-    '--ipfs-endpoints',
     required=False,
-    help='The IPFS endpoints.',
-    default=IPFS_ENDPOINTS,
+    help='The endpoint of the execution node used for computing the vault address.',
     type=str,
 )
 @click.option(
     '--deposit-data-file',
-    help='The file to store the deposit data file. Defaults to ./data/deposit_data.json',
+    help='The path to store the deposit data file. Defaults to ./data/deposit_data.json',
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
     default='./data/deposit_data.json',
 )
@@ -112,7 +92,7 @@ def validate_empty_dir(ctx, param, value):
     '--keystores',
     required=False,
     help='The directory to store the validator keys in the EIP-2335 standard.'
-    ' It is ignored when web3signer-endpoint is used. Defaults to ./data/keystores.',
+    ' Defaults to ./data/keystores.',
     default='./data/keystores',
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
     callback=validate_empty_dir,
@@ -120,23 +100,41 @@ def validate_empty_dir(ctx, param, value):
 @click.option(
     '--password-file',
     required=False,
-    help='The file to store randomly generated password for encrypting the keystores. '
-    'It is ignored when web3signer-endpoint is used. '
-    'Defaults to ./data/keystores/password.txt.',
+    help='The path to store randomly generated password for encrypting the keystores.'
+    ' Defaults to ./data/keystores/password.txt.',
     default='./data/keystores/password.txt',
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
 )
 @click.option(
     '--web3signer-endpoint',
     required=False,
-    help='The endpoint of the web3signer service.',
+    help='The endpoint of the web3signer service for uploading the keystores.',
     type=str,
+)
+@click.option(
+    '--mnemonic-start-index',
+    required=False,
+    help="The index of the first validator's keys you wish to generate."
+    ' If this is your first time generating keys with this mnemonic, use 0.'
+    ' If you have generated keys using this mnemonic before,'
+    ' add --mnemonic-next-index-file flag or specify the next index from which you want'
+    " to start generating keys from (eg, if you've generated 4 keys before (keys #0, #1, #2, #3),"
+    ' then enter 4 here.',
+    type=click.IntRange(min=0),
+)
+@click.option(
+    '--mnemonic-next-index-file',
+    help='The path where to store the mnemonic index to use for generating next validator keys.'
+    ' Used to always generate unique validator keys.'
+    ' Defaults to ./mnemonic_next_index.txt',
+    type=click.Path(exists=False, file_okay=True, dir_okay=False),
+    default='./mnemonic_next_index.txt',
 )
 @click.option(
     '--no-confirm',
     is_flag=True,
     default=False,
-    help='Skips web3signer upload confirmation message when provided.',
+    help='Skips confirmation messages when provided.',
 )
 @click.command(help='Creates the validator keys from the mnemonic.')
 @async_command
@@ -147,51 +145,55 @@ async def create_keys(
     vault: HexAddress | None,
     admin: HexAddress | None,
     vault_type: str | None,
-    execution_endpoint: str,
-    consensus_endpoint: str,
-    ipfs_endpoints: list[str],
+    execution_endpoint: str | None,
     deposit_data_file: str,
     keystores: str,
     password_file: str,
     web3signer_endpoint: str,
+    mnemonic_start_index: int | None,
+    mnemonic_next_index_file: str,
     no_confirm: bool,
 ) -> None:
-    execution_client = get_execution_client(execution_endpoint, is_poa=NETWORKS[network].IS_POA)
-    if not vault:
+    if not vault and admin and vault_type and execution_endpoint:
+        execution_client = get_execution_client(execution_endpoint, is_poa=NETWORKS[network].IS_POA)
         vault = await generate_vault_address(
             admin=admin, vault_type=vault_type, execution_client=execution_client, network=network
         )
+    elif not vault and (admin or vault_type or execution_endpoint):
+        raise click.BadParameter(
+            'You must provide either the vault address'
+            ' or execution endpoint, vault type, and admin address'
+        )
+    elif not vault:
+        vault = click.prompt('Enter the vault address for which the validator keys are generated')
+        if not is_address(vault):
+            raise click.BadParameter('Invalid Ethereum address')
+        vault = to_checksum_address(vault)  # type: ignore
 
-    current_block = await get_current_number(execution_client=execution_client)
-    fetch_from_block = BlockNumber(current_block - NETWORKS[network].BEACON_SYNC_BLOCK_DISTANCE)
-
-    used_keys = []
-    current_validator_ipfs_hash = await VaultContract(
-        address=vault,
-        execution_client=execution_client,
-        genesis_block=NETWORKS[network].VAULT_CONTRACT_GENESIS_BLOCK,
-    ).get_last_validators_root_ipfs_hash(current_block)
-
-    if current_validator_ipfs_hash:
-        current_keys = await fetch_vault_deposit_data(ipfs_endpoints, current_validator_ipfs_hash)
-        used_keys.extend(current_keys)
-
-    network_validators_keys = await ValidatorRegistryContract(
-        address=NETWORKS[network].VALIDATORS_REGISTRY_CONTRACT_ADDRESS,
-        execution_client=execution_client,
-        genesis_block=NETWORKS[network].VALIDATORS_REGISTRY_GENESIS_BLOCK,
-    ).get_latest_network_validator_public_keys(from_block=fetch_from_block, to_block=current_block)
-    used_keys.extend(network_validators_keys)
+    if mnemonic_start_index is None:
+        if not Path(mnemonic_next_index_file).is_file():
+            mnemonic_start_index = click.prompt(
+                'Enter the mnemonic start index for generating validator keys',
+                type=click.IntRange(min=0),
+                default=0,
+            )
+        else:
+            with open(mnemonic_next_index_file, 'r', encoding='utf-8') as f:
+                mnemonic_start_index = int(f.read())
 
     credentials = await generate_credentials(
         network=network,
         vault=vault,
         mnemonic=mnemonic,
         count=count,
-        used_keys=used_keys,
-        consensus_endpoint=consensus_endpoint,
+        start_index=mnemonic_start_index,
     )
     deposit_data = export_deposit_data_json(credentials=credentials, filename=deposit_data_file)
+
+    export_keystores(credentials=credentials, keystores_dir=keystores, password_file=password_file)
+
+    with open(mnemonic_next_index_file, 'w', encoding='utf-8') as f:
+        f.write(str(mnemonic_start_index + count))
 
     if web3signer_endpoint:
         if not no_confirm:
@@ -200,33 +202,27 @@ async def create_keys(
                 default=True,
                 abort=True,
             )
-
-        keys, passwords = [], []
+        password = get_or_create_password_file(password_file)
+        keys = []
         with click.progressbar(
             credentials,
-            label='Generating keystores for web3signer\t\t',
+            label='Uploading keystores to web3signer\t\t',
             show_percent=False,
             show_pos=True,
         ) as _credentials:
             for credential in _credentials:
-                password = generate_password()
                 keys.append(credential.signing_keystore(password).as_json())
-                passwords.append(password)
 
         Web3signer(web3signer_endpoint).upload_keys(
             keystores=keys,
-            passwords=passwords,
-        )
-
-    else:
-        export_keystores(
-            credentials=credentials, keystores_dir=keystores, password_file=password_file
+            passwords=[password] * len(keys),
         )
 
     click.clear()
-    click.secho(
-        f'Done. Generated {count} keys for {vault} vault.\n'
-        f'Deposit data saved to {deposit_data} file',
-        bold=True,
-        fg='green',
+
+    click.echo(
+        f'Done. Generated {greenify(count)} keys for {greenify(vault)} vault.\n'
+        f'Keystores saved to {greenify(keystores)} file\n'
+        f'Deposit data saved to {greenify(deposit_data)} file\n'
+        f'Next mnemonic start index saved to {greenify(mnemonic_next_index_file)} file',
     )

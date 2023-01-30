@@ -58,7 +58,7 @@ def validate_validator_index(ctx, param, value):
     '--disable-proposal-builder',
     is_flag=True,
     default=False,
-    help='Disable proposal builder for Teku and Prysm clients',
+    help='Disable proposal builder for Teku and Prysm clients.',
 )
 @click.command(
     help='Creates validator configuration files for Lighthouse, '

@@ -6,7 +6,7 @@ from key_manager.language import LANGUAGES, create_new_mnemonic
 @click.option(
     '--language',
     default='english',
-    prompt='Choose your mnemonic language',
+    prompt='Choose your mnemonic language.',
     type=click.Choice(
         LANGUAGES,
         case_sensitive=False,

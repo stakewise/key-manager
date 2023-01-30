@@ -1,39 +1,19 @@
 import click
 from eth_typing import HexStr
-from sw_utils import get_consensus_client, get_execution_client
+from sw_utils import get_consensus_client
 from sw_utils.consensus import EXITED_STATUSES
 
 from key_manager.consensus import get_validators
 from key_manager.contrib import async_command
-from key_manager.execution import VaultContract, get_current_number
-from key_manager.ipfs import fetch_vault_deposit_data
-from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, IPFS_ENDPOINTS, NETWORKS
-from key_manager.validators import validate_eth_address
+from key_manager.credentials import load_deposit_data_pub_keys
 from key_manager.web3signer import Web3signer
 
 
 @click.option(
-    '--network',
-    default=GOERLI,
-    help='The network to generate the deposit data for',
-    prompt='Enter the network name',
-    type=click.Choice(
-        AVAILABLE_NETWORKS,
-        case_sensitive=False,
-    ),
-)
-@click.option(
-    '--vault',
-    help='The vault address for which the validator keys are generated.',
-    prompt='Enter the vault address for which the validator keys are generated',
-    type=str,
-    callback=validate_eth_address,
-)
-@click.option(
-    '--execution-endpoint',
-    help='The endpoint of the execution node.',
-    prompt='Enter the endpoint of the execution node',
-    type=str,
+    '--deposit-data-file',
+    help='The current vault deposit data file. Defaults to ./data/deposit_data.json',
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    default='./data/deposit_data.json',
 )
 @click.option(
     '--consensus-endpoint',
@@ -48,47 +28,25 @@ from key_manager.web3signer import Web3signer
     type=str,
 )
 @click.option(
-    '--ipfs-endpoints',
-    required=False,
-    help='The IPFS endpoints.',
-    default=IPFS_ENDPOINTS,
-    type=str,
-)
-@click.option(
     '--no-confirm',
     is_flag=True,
     default=False,
     help='Skips web3signer clean-up confirmation message when provided.',
 )
-@click.command(help='Removes the exited validator keys from the web3signer')
+@click.command(help='Removes the exited validator keys from the web3signer.')
 @async_command
 async def cleanup_keys(
-    network: str,
-    vault: str,
-    execution_endpoint: str,
+    deposit_data_file: str,
     consensus_endpoint: str,
-    ipfs_endpoints: list[str],
     web3signer_endpoint: str,
     no_confirm: bool,
 ) -> None:
-    execution_client = get_execution_client(execution_endpoint, is_poa=NETWORKS[network].IS_POA)
     consensus_client = get_consensus_client(consensus_endpoint)
 
     web3signer = Web3signer(web3signer_endpoint)
-    current_block = await get_current_number(execution_client=execution_client)
 
-    deposit_data_keys = []
+    deposit_data_keys = load_deposit_data_pub_keys(deposit_data_file)
     removed_keys = []
-    current_validator_ipfs_hash = await VaultContract(
-        address=vault,
-        execution_client=execution_client,
-        genesis_block=NETWORKS[network].VAULT_CONTRACT_GENESIS_BLOCK,
-    ).get_last_validators_root_ipfs_hash(current_block)
-
-    if current_validator_ipfs_hash:
-        deposit_data_keys = await fetch_vault_deposit_data(
-            ipfs_endpoints, current_validator_ipfs_hash
-        )
 
     current_keys = web3signer.list_keys()
     if not current_keys:
