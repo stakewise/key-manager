@@ -20,7 +20,7 @@ from key_manager.validators import validate_empty_dir, validate_mnemonic
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
     callback=validate_empty_dir,
 )
-@click.command(help='Creates the encrypted hot wallet the from provided mnemonic.')
+@click.command(help='Creates the encrypted hot wallet from the mnemonic.')
 def create_wallet(mnemonic: str, wallet_dir: str) -> None:
     wallet = generate_encrypted_wallet(mnemonic, wallet_dir)
-    click.echo(f'Done. Wallet {greenify(wallet)} saved to {greenify(wallet_dir)} directory\n')
+    click.echo(f'Done. Wallet {greenify(wallet)} saved to {greenify(wallet_dir)} directory')
