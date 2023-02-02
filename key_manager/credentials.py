@@ -8,6 +8,7 @@ from os import makedirs, path
 
 import click
 import milagro_bls_binding as bls
+from eth_account import Account
 from eth_typing import BLSPrivateKey, HexAddress, HexStr
 from eth_utils import add_0x_prefix
 from py_ecc.bls import G2ProofOfPossession
@@ -228,3 +229,17 @@ def load_deposit_data_pub_keys(deposit_data_file: str) -> list[HexStr]:
         deposit_data = json.load(f)
 
     return [add_0x_prefix(data['pubkey']) for data in deposit_data]
+
+
+def generate_encrypted_wallet(mnemonic: str, wallet_dir: str) -> str:
+    Account.enable_unaudited_hdwallet_features()
+
+    account = Account().from_mnemonic(mnemonic=mnemonic)
+    password = get_or_create_password_file(path.join(wallet_dir, 'password.txt'))
+    encrypted_data = Account.encrypt(account.key, password=password)
+
+    wallet_name = f'{account.address}-{int(time.time())}.json'
+    with open(path.join(wallet_dir, wallet_name), 'w', encoding='utf-8') as f:
+        json.dump(encrypted_data, f, default=lambda x: x.hex())
+
+    return wallet_name

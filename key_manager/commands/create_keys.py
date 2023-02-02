@@ -5,7 +5,7 @@ from eth_typing import HexAddress
 from eth_utils import is_address, to_checksum_address
 from sw_utils import get_execution_client
 
-from key_manager.contrib import async_command
+from key_manager.contrib import async_command, greenify
 from key_manager.credentials import (
     export_deposit_data_json,
     export_keystores,
@@ -14,20 +14,12 @@ from key_manager.credentials import (
 from key_manager.execution import generate_vault_address
 from key_manager.password import get_or_create_password_file
 from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, NETWORKS, VAULT_TYPE
-from key_manager.validators import validate_eth_address, validate_mnemonic
+from key_manager.validators import (
+    validate_empty_dir,
+    validate_eth_address,
+    validate_mnemonic,
+)
 from key_manager.web3signer import Web3signer
-
-
-# pylint: disable-next=unused-argument
-def validate_empty_dir(ctx, param, value):
-    path = Path(value)
-    if path.is_dir() and any(path.iterdir()):
-        raise click.BadParameter(f'Keystores directory({value}) must be empty')
-    return value
-
-
-def greenify(value):
-    return click.style(value, bold=True, fg='green')
 
 
 @click.option(
