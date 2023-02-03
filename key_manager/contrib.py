@@ -2,6 +2,8 @@ import asyncio
 from functools import wraps
 from typing import Callable
 
+import click
+
 
 def async_command(f):
     """Decorator to run asyncio click commands"""
@@ -25,3 +27,7 @@ def async_multiprocessing_proxy(
 def chunkify(items, size):
     for i in range(0, len(items), size):
         yield items[i : i + size]
+
+
+def greenify(value):
+    return click.style(value, bold=True, fg='green')
