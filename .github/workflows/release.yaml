@@ -60,15 +60,15 @@ jobs:
               $BUILD_FILE_NAME = "key-manager-" + $RELEASE_VERSION + "-windows-amd64"
               $BUILD_FILE_NAME_PATH = ".\" + $BUILD_FILE_NAME
               poetry run pyinstaller --onefile --hidden-import multiaddr.codecs.uint16be --hidden-import multiaddr.codecs.idna --collect-data key_manager ./key_manager/main.py --name key-manager --distpath $BUILD_FILE_NAME_PATH
-              poetry run pyinstaller \
-                  --onefile \
-                  --hidden-import multiaddr.codecs.uint16be \
-                  --hidden-import multiaddr.codecs.idna \
-                  --collect-data key_manager \
-                  --add-data "./key_manager/abis;key_manager/abis/" \
-                  --add-data "./key_manager/word_lists;key_manager/word_lists/" \
-                  --name key-manager \
-                  --distpath ./${BUILD_FILE_NAME} \
+              poetry run pyinstaller `
+                  --onefile `
+                  --hidden-import multiaddr.codecs.uint16be `
+                  --hidden-import multiaddr.codecs.idna `
+                  --collect-data key_manager `
+                  --add-data "./key_manager/abis;key_manager/abis/" `
+                  --add-data "./key_manager/word_lists;key_manager/word_lists/" `
+                  --name key-manager `
+                  --distpath ./${BUILD_FILE_NAME} `
                   ./key_manager/main.py;
               $ZIP_FILE_NAME = $BUILD_FILE_NAME + ".zip"
               Compress-Archive -Path $BUILD_FILE_NAME_PATH -DestinationPath $ZIP_FILE_NAME
