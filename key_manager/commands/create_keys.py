@@ -47,7 +47,7 @@ from key_manager.web3signer import Web3signer
 )
 @click.option(
     '--vault',
-    '--withdrawal',
+    '--withdrawal-address',
     help='The withdrawal address where the funds will be sent after validators’ withdrawals.',
     type=str,
     callback=validate_eth_address,
