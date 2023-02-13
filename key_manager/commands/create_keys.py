@@ -47,7 +47,8 @@ from key_manager.web3signer import Web3signer
 )
 @click.option(
     '--vault',
-    help='The vault address for which the validator keys are generated.',
+    '--withdrawal',
+    help='The withdrawal address where the funds will be sent after validators’ withdrawals.',
     type=str,
     callback=validate_eth_address,
     required=False,
@@ -71,7 +72,7 @@ from key_manager.web3signer import Web3signer
 @click.option(
     '--execution-endpoint',
     required=False,
-    help='The endpoint of the execution node used for computing the vault address.',
+    help='The endpoint of the execution node used for computing the withdrawal address.',
     type=str,
 )
 @click.option(
@@ -153,11 +154,13 @@ async def create_keys(
         )
     elif not vault and (admin or vault_type or execution_endpoint):
         raise click.BadParameter(
-            'You must provide either the vault address'
+            'You must provide either the withdrawal address'
             ' or execution endpoint, vault type, and admin address'
         )
     elif not vault:
-        vault = click.prompt('Enter the vault address for which the validator keys are generated')
+        vault = click.prompt(
+            'Enter the withdrawal address for which the validator keys are generated'
+        )
         if not is_address(vault):
             raise click.BadParameter('Invalid Ethereum address')
         vault = to_checksum_address(vault)  # type: ignore
