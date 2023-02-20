@@ -206,8 +206,7 @@ async def create_keys(
             show_pos=True,
         ) as _credentials:
             for credential in _credentials:
-                keys.append(credential.signing_keystore(password).as_json())
-
+                keys.append(credential.encrypt_signing_keystore(password).as_json())
         Web3signer(web3signer_endpoint).upload_keys(
             keystores=keys,
             passwords=[password] * len(keys),

@@ -31,21 +31,28 @@ class TestCreateKeys(unittest.TestCase):
             '--vault',
             vault,
             '--mnemonic-start-index',
-            0
+            0,
+            '--web3signer-endpoint',
+            'https://example.com',
         ]
-        with runner.isolated_filesystem():
+        with runner.isolated_filesystem(), patch(
+            'key_manager.commands.create_configs.Web3signer.upload_keys',
+            return_value=None,
+        ):
             result = runner.invoke(create_keys, args)
             assert result.exit_code == 0
 
-            output = f'''
-            Creating validator keys:\t\t
-Generating deposit data JSON\t\t
-Exporting validator keystores\t\t
-Done. Generated 5 keys for {vault} vault.
-Keystores saved to ./data/keystores file
-Deposit data saved to ./data/deposit_data.json file
-Next mnemonic start index saved to ./mnemonic_next_index.txt file
-'''
+            output = (
+                'Creating validator keys:\t\t\n'
+                'Generating deposit data JSON\t\t\n'
+                'Exporting validator keystores\t\t\n'
+                'Generated 5 keystores, upload them to the Web3Signer? [Y/n]: \n'
+                'Uploading keystores to web3signer\t\t\n'
+                f'Done. Generated 5 keys for {vault} vault.\n'
+                'Keystores saved to ./data/keystores file\n'
+                'Deposit data saved to ./data/deposit_data.json file\n'
+                'Next mnemonic start index saved to ./mnemonic_next_index.txt file\n'
+            )
             assert output.strip() == result.output.strip()
             with open('./data/deposit_data.json', encoding='utf-8') as f:
                 data = json.load(f)
