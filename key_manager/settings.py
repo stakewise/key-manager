@@ -10,6 +10,13 @@ MAINNET = 'mainnet'
 GOERLI = 'goerli'
 GNOSIS = 'gnosis'
 
+IPFS_ENDPOINTS = [
+    'https://stakewise.infura-ipfs.io',
+    'http://cloudflare-ipfs.com',
+    'https://gateway.pinata.cloud',
+    'https://ipfs.io',
+]
+
 
 class VAULT_TYPE(Enum):
     PRIVATE = 'private'

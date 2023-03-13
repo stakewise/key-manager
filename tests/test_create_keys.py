@@ -32,13 +32,8 @@ class TestCreateKeys(unittest.TestCase):
             vault,
             '--mnemonic-start-index',
             0,
-            '--web3signer-endpoint',
-            'https://example.com',
         ]
-        with runner.isolated_filesystem(), patch(
-            'key_manager.commands.create_configs.Web3signer.upload_keys',
-            return_value=None,
-        ):
+        with runner.isolated_filesystem():
             result = runner.invoke(create_keys, args)
             assert result.exit_code == 0
 
@@ -46,8 +41,6 @@ class TestCreateKeys(unittest.TestCase):
                 'Creating validator keys:\t\t\n'
                 'Generating deposit data JSON\t\t\n'
                 'Exporting validator keystores\t\t\n'
-                'Generated 5 keystores, upload them to the Web3Signer? [Y/n]: \n'
-                'Uploading keystores to web3signer\t\t\n'
                 f'Done. Generated 5 keys for {vault} vault.\n'
                 'Keystores saved to ./data/keystores file\n'
                 'Deposit data saved to ./data/deposit_data.json file\n'
@@ -85,7 +78,7 @@ class TestCreateKeys(unittest.TestCase):
             '--execution-endpoint',
             'https://example.com',
             '--mnemonic-start-index',
-            0
+            0,
         ]
         with runner.isolated_filesystem(), patch(
             'key_manager.execution.VaultFactoryContract.compute_addresses',

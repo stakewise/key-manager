@@ -1,7 +1,12 @@
+import json
+import time
+from os import path
+
 import click
+from eth_account import Account
 
 from key_manager.contrib import greenify
-from key_manager.credentials import generate_encrypted_wallet
+from key_manager.password import get_or_create_password_file
 from key_manager.validators import validate_empty_dir, validate_mnemonic
 
 
@@ -22,5 +27,19 @@ from key_manager.validators import validate_empty_dir, validate_mnemonic
 )
 @click.command(help='Creates the encrypted hot wallet from the mnemonic.')
 def create_wallet(mnemonic: str, wallet_dir: str) -> None:
-    wallet = generate_encrypted_wallet(mnemonic, wallet_dir)
+    wallet = _generate_encrypted_wallet(mnemonic, wallet_dir)
     click.echo(f'Done. Wallet {greenify(wallet)} saved to {greenify(wallet_dir)} directory')
+
+
+def _generate_encrypted_wallet(mnemonic: str, wallet_dir: str) -> str:
+    Account.enable_unaudited_hdwallet_features()
+
+    account = Account().from_mnemonic(mnemonic=mnemonic)
+    password = get_or_create_password_file(path.join(wallet_dir, 'password.txt'))
+    encrypted_data = Account.encrypt(account.key, password=password)
+
+    wallet_name = f'{account.address}-{int(time.time())}.json'
+    with open(path.join(wallet_dir, wallet_name), 'w', encoding='utf-8') as f:
+        json.dump(encrypted_data, f, default=lambda x: x.hex())
+
+    return wallet_name

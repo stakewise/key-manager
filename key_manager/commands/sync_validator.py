@@ -5,15 +5,15 @@ import click
 import yaml
 from eth_typing import HexStr
 
-from key_manager.validators import validate_eth_address
-from key_manager.web3signer import Web3signer
+from key_manager.database import Database, check_db_connection
+from key_manager.validators import validate_db_uri, validate_eth_address
 
 VALIDATOR_DEFINITIONS_FILENAME = 'validator_definitions.yml'
 SIGNER_KEYS_FILENAME = 'signer_keys.yml'
 PROPOSER_CONFIG_FILENAME = 'proposer_config.json'
 
 
-# pylint: disable-next=unused-argument
+# # pylint: disable-next=unused-argument
 def validate_validator_index(ctx, param, value):
     total_validators = ctx.params.get('total_validators', 0)
     if not total_validators or total_validators <= value:
@@ -21,13 +21,6 @@ def validate_validator_index(ctx, param, value):
     return value
 
 
-@click.option(
-    '--fee-recipient',
-    help='The recipient address for MEV & priority fees.',
-    prompt='Enter the recipient address for MEV & priority fees',
-    type=str,
-    callback=validate_eth_address,
-)
 @click.option(
     '--validator-index',
     help='The validator index to generate the configuration files.',
@@ -42,10 +35,29 @@ def validate_validator_index(ctx, param, value):
     type=click.IntRange(min=1),
 )
 @click.option(
+    '--db-url',
+    help='The database connection address.',
+    prompt="Enter the database connection string, ex. 'postgresql://username:pass@hostname/dbname'",
+    callback=validate_db_uri,
+)
+@click.option(
     '--web3signer-endpoint',
     help='The endpoint of the web3signer service.',
     prompt='Enter the endpoint of the web3signer service',
     type=str,
+)
+@click.option(
+    '--fee-recipient',
+    help='The recipient address for MEV & priority fees.',
+    prompt='Enter the recipient address for MEV & priority fees',
+    type=str,
+    callback=validate_eth_address,
+)
+@click.option(
+    '--disable-proposal-builder',
+    is_flag=True,
+    default=False,
+    help='Disable proposal builder for Teku and Prysm clients.',
 )
 @click.option(
     '--output-dir',
@@ -54,44 +66,44 @@ def validate_validator_index(ctx, param, value):
     default='./data/configs',
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
-@click.option(
-    '--disable-proposal-builder',
-    is_flag=True,
-    default=False,
-    help='Disable proposal builder for Teku and Prysm clients.',
-)
 @click.command(
     help='Creates validator configuration files for Lighthouse, '
-    'Prysm, and Teku clients to sign data using web3signer.'
+    'Prysm, and Teku clients to sign data using keys form database.'
 )
-def create_configs(
-    fee_recipient: str,
-    total_validators: int,
+def sync_validator(
     validator_index: int,
+    total_validators: int,
+    db_url: str,
     web3signer_endpoint: str,
-    output_dir: str,
+    fee_recipient: str,
     disable_proposal_builder: bool,
+    output_dir: str,
+
 ) -> None:
-    web3signer = Web3signer(web3signer_endpoint)
-    web3signer_keys = web3signer.list_keys()
+    check_db_connection(db_url)
 
-    if not web3signer_keys:
-        raise click.ClickException('Web3signer does not contain any keys')
+    database = Database(db_url=db_url)
+    public_keys_count = database.fetch_public_keys_count()
 
-    keys_per_validator = len(web3signer_keys) // total_validators
+    keys_per_validator = public_keys_count // total_validators
 
     start_index = keys_per_validator * validator_index
     if validator_index == total_validators - 1:
-        validator_keys = web3signer_keys[start_index:]
+        end_index = public_keys_count
     else:
-        validator_keys = web3signer_keys[start_index : start_index + keys_per_validator]
+        end_index = start_index + keys_per_validator
+
+    public_keys = database.fetch_public_keys_by_range(start_index=start_index, end_index=end_index)
+
+    if not public_keys:
+        raise click.ClickException('Database does not contain any keys')
 
     Path.mkdir(Path(output_dir), exist_ok=True, parents=True)
 
     # lighthouse
     validator_definitions_filepath = str(Path(output_dir, VALIDATOR_DEFINITIONS_FILENAME))
     _generate_lighthouse_config(
-        public_keys=validator_keys,
+        public_keys=public_keys,
         web3signer_url=web3signer_endpoint,
         fee_recipient=fee_recipient,
         filepath=validator_definitions_filepath,
@@ -99,7 +111,7 @@ def create_configs(
 
     # teku/prysm
     signer_keys_filepath = str(Path(output_dir, SIGNER_KEYS_FILENAME))
-    _generate_signer_keys_config(public_keys=validator_keys, filepath=signer_keys_filepath)
+    _generate_signer_keys_config(public_keys=public_keys, filepath=signer_keys_filepath)
 
     proposer_config_filepath = str(Path(output_dir, PROPOSER_CONFIG_FILENAME))
     _generate_proposer_config(
@@ -111,7 +123,7 @@ def create_configs(
     click.clear()
     click.secho(
         f'Done. '
-        f'Generated configs with {len(validator_keys)} keys for validator #{validator_index}.\n'
+        f'Generated configs with {len(public_keys)} keys for validator #{validator_index}.\n'
         f'Validator definitions for Lighthouse saved to {validator_definitions_filepath} file.\n'
         f'Signer keys for Teku\\Prysm saved to {signer_keys_filepath} file.\n'
         f'Proposer config for Teku\\Prysm saved to {proposer_config_filepath} file.\n',

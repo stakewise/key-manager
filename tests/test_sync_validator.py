@@ -3,46 +3,55 @@ from unittest.mock import patch
 
 from click.testing import CliRunner
 
-from key_manager.commands.create_configs import create_configs
+from key_manager.commands.sync_validator import sync_validator
 
 from .factories import faker
 
 
-class TestCreateConfig(unittest.TestCase):
+class TestSyncValidator(unittest.TestCase):
     def test_basic(self):
         fee_recipient = faker.eth_address()
-        total_validators = 100
-        validator_index = 51
+        keys_count = 1000
+        validator_index = 3
+        total_validators = 5
+        db_url = 'postgresql://username:pass@hostname/dbname'
 
-        public_keys = [faker.eth_public_key() for x in range(1000)]
+        public_keys = [faker.eth_public_key() for x in range(keys_count)]
 
         runner = CliRunner()
         args = [
-            '--fee-recipient',
-            fee_recipient,
             '--total-validators',
             total_validators,
             '--validator-index',
             validator_index,
+            '--db-url',
+            db_url,
             '--web3signer-endpoint',
             'https://example.com',
+            '--fee-recipient',
+            fee_recipient,
+            '--disable-proposal-builder',
         ]
 
         with runner.isolated_filesystem(), patch(
-            'key_manager.commands.create_configs.Web3signer.list_keys',
-            return_value=public_keys,
+            'key_manager.commands.sync_validator.check_db_connection'
+        ), patch(
+            'key_manager.commands.sync_validator.Database.fetch_public_keys_count',
+            return_value=keys_count,
+        ), patch(
+            'key_manager.commands.sync_validator.Database.fetch_public_keys_by_range',
+            return_value=public_keys[400:600],
         ):
-            result = runner.invoke(create_configs, args)
-
+            result = runner.invoke(sync_validator, args)
             assert result.exit_code == 0
             output = '''
-Done. Generated configs with 10 keys for validator #51.
+Done. Generated configs with 200 keys for validator #3.
 Validator definitions for Lighthouse saved to data/configs/validator_definitions.yml file.
 Signer keys for Teku\\Prysm saved to data/configs/signer_keys.yml file.
 Proposer config for Teku\\Prysm saved to data/configs/proposer_config.json file.
 '''
             assert output.strip() == result.output.strip()
-            validator_public_keys = public_keys[510:520]
+            validator_public_keys = public_keys[400:600]
             with open('./data/configs/validator_definitions.yml', encoding='utf-8') as f:
                 s = """---"""
                 for public_key in validator_public_keys:
@@ -67,7 +76,7 @@ Proposer config for Teku\\Prysm saved to data/configs/proposer_config.json file.
     "default_config": {
         "fee_recipient": "%s",
         "builder": {
-            "enabled": true
+            "enabled": false
         }
     }
 }"""
