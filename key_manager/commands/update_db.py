@@ -63,7 +63,7 @@ def update_db(
     check_db_connection(db_url)
 
     with open(keystores_password_file, 'r', encoding='utf-8') as f:
-        keystores_password = f.read()
+        keystores_password = f.read().strip()
 
     private_keys = []
 
@@ -121,7 +121,6 @@ def _encrypt_private_keys(
 
     click.secho('Encrypting database keys...', bold=True)
     key_records: list[DatabaseKeyRecord] = []
-    index = 0
     for private_key in private_keys:
         encrypted_private_key, nonce = encoder.encrypt(str(private_key))
 
@@ -133,6 +132,5 @@ def _encrypt_private_keys(
 
         if key_record not in key_records:
             key_records.append(key_record)
-            index += 1
 
     return key_records

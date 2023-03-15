@@ -13,7 +13,7 @@ SIGNER_KEYS_FILENAME = 'signer_keys.yml'
 PROPOSER_CONFIG_FILENAME = 'proposer_config.json'
 
 
-# # pylint: disable-next=unused-argument
+# pylint: disable-next=unused-argument
 def validate_validator_index(ctx, param, value):
     total_validators = ctx.params.get('total_validators', 0)
     if not total_validators or total_validators <= value:
@@ -68,7 +68,7 @@ def validate_validator_index(ctx, param, value):
 )
 @click.command(
     help='Creates validator configuration files for Lighthouse, '
-    'Prysm, and Teku clients to sign data using keys form database.'
+    'Prysm, and Teku clients to sign data using keys from database.'
 )
 def sync_validator(
     validator_index: int,
@@ -96,7 +96,7 @@ def sync_validator(
     public_keys = database.fetch_public_keys_by_range(start_index=start_index, end_index=end_index)
 
     if not public_keys:
-        raise click.ClickException('Database does not contain any keys')
+        raise click.ClickException('Database does not contain in range')
 
     Path.mkdir(Path(output_dir), exist_ok=True, parents=True)
 

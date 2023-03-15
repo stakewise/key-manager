@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 import click
 import psycopg2
 from eth_typing import HexStr
@@ -64,7 +62,7 @@ class Database:
     def fetch_keys(self) -> list[DatabaseKeyRecord]:
         with _get_db_connection(self.db_url) as conn:
             with conn.cursor() as cur:
-                cur.execute('SELECT * FROM keys')
+                cur.execute('SELECT * FROM keys ORDER BY public_key')
                 rows = cur.fetchall()
                 return [
                     DatabaseKeyRecord(
@@ -89,11 +87,4 @@ def check_db_connection(db_url):
 
 
 def _get_db_connection(db_url):
-    result = urlparse(db_url)
-    return psycopg2.connect(
-        database=result.path[1:],
-        user=result.username,
-        password=result.password,
-        host=result.hostname,
-        port=result.port,
-    )
+    return psycopg2.connect(dsn=db_url)
