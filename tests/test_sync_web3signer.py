@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from click.testing import CliRunner
 from eth_typing import BLSPrivateKey
+from eth_utils import add_0x_prefix
 from py_ecc.bls import G2ProofOfPossession
 from staking_deposit.key_handling.key_derivation.mnemonic import get_mnemonic, get_seed
 from staking_deposit.key_handling.key_derivation.path import path_to_nodes
@@ -16,7 +17,7 @@ from web3 import Web3
 from key_manager.commands.sync_web3signer import sync_web3signer
 from key_manager.contrib import bytes_to_str
 from key_manager.credentials import COIN_TYPE, PURPOSE
-from key_manager.encoder import Encoder
+from key_manager.encryptor import Encryptor
 from key_manager.language import WORD_LISTS_PATH
 from key_manager.typings import DatabaseKeyRecord
 
@@ -27,11 +28,11 @@ class TestSyncWeb3signer(unittest.TestCase):
     def test_basic(self):
         db_url = 'postgresql://username:pass@hostname/dbname'
         keys_count = 3
-        encoder = Encoder()
+        encryptor = Encryptor()
 
         mnemonic = get_mnemonic(language='english', words_path=WORD_LISTS_PATH)
         private_keys, db_records = _generate_keys(
-            mnemonic=mnemonic, encoder=encoder, keys_count=keys_count
+            mnemonic=mnemonic, encryptor=encryptor, keys_count=keys_count
         )
 
         runner = CliRunner()
@@ -50,7 +51,7 @@ class TestSyncWeb3signer(unittest.TestCase):
             'key_manager.commands.sync_web3signer.Database.fetch_keys',
             return_value=db_records,
         ), patch.dict(
-            os.environ, {'DECRYPT_ENV': encoder.cipher_key_str}
+            os.environ, {'DECRYPT_ENV': encryptor.str_key}
         ):
             result = runner.invoke(sync_web3signer, args)
             assert result.exit_code == 0
@@ -61,7 +62,7 @@ class TestSyncWeb3signer(unittest.TestCase):
                 key_hex = Web3.to_hex(int(private_key))
                 with open(f'./web3signer/key_{index}.yaml', encoding='utf-8') as f:
                     s = f"""keyType: BLS
-privateKey: \'0x{key_hex[2:].zfill(64)}\'
+privateKey: \'{add_0x_prefix(key_hex)}\'
 type: file-raw"""
                     s += '\n'
                     assert f.read() == s
@@ -75,7 +76,7 @@ type: file-raw"""
 
 
 def _generate_keys(
-    mnemonic, encoder, keys_count
+    mnemonic, encryptor, keys_count
 ) -> tuple[list[BLSPrivateKey], list[DatabaseKeyRecord]]:
     private_keys, db_records = [], []
 
@@ -88,7 +89,7 @@ def _generate_keys(
         for node in nodes:
             private_key = BLSPrivateKey(derive_child_SK(parent_SK=private_key, index=node))
 
-        encrypted_private_key, nonce = encoder.encrypt(str(private_key))
+        encrypted_private_key, nonce = encryptor.encrypt(str(private_key))
 
         private_keys.append(private_key)
         db_records.append(

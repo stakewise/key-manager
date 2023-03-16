@@ -9,7 +9,7 @@ from web3 import Web3
 
 from key_manager.contrib import bytes_to_str
 from key_manager.database import Database, check_db_connection
-from key_manager.encoder import Encoder
+from key_manager.encryptor import Encryptor
 from key_manager.typings import DatabaseKeyRecord
 from key_manager.validators import validate_db_uri
 
@@ -68,7 +68,7 @@ def update_db(
     private_keys = []
 
     with click.progressbar(
-            glob.glob(os.path.join(keystores_dir, '*.json')),
+            glob.glob(os.path.join(keystores_dir, 'keystore-*.json')),
             label='Loading keystores...\t\t',
             show_percent=False,
             show_pos=True,
@@ -86,15 +86,15 @@ def update_db(
     database = Database(
         db_url=db_url,
     )
-    encoder = Encoder(encryption_key)
+    encryptor = Encryptor(encryption_key)
 
     database_records = _encrypt_private_keys(
         private_keys=private_keys,
-        encoder=encoder,
+        encryptor=encryptor,
     )
     if not no_confirm:
         click.confirm(
-            f'Generated {len(private_keys)} validator keys, upload them to the database?',
+            f'Fetched {len(private_keys)} validator keys, upload them to the database?',
             default=True,
             abort=True,
         )
@@ -105,14 +105,14 @@ def update_db(
 
     click.secho(
         f'The database contains {total_keys_count} validator keys.\n'
-        f"Save decryption key: '{encoder.cipher_key_str}'",
+        f"The decryption key: '{encryptor.str_key}'",
         bold=True,
         fg='green',
     )
 
 
 def _encrypt_private_keys(
-    private_keys: list[int], encoder: Encoder
+    private_keys: list[int], encryptor: Encryptor
 
 ) -> list[DatabaseKeyRecord]:
     """
@@ -122,7 +122,7 @@ def _encrypt_private_keys(
     click.secho('Encrypting database keys...', bold=True)
     key_records: list[DatabaseKeyRecord] = []
     for private_key in private_keys:
-        encrypted_private_key, nonce = encoder.encrypt(str(private_key))
+        encrypted_private_key, nonce = encryptor.encrypt(str(private_key))
 
         key_record = DatabaseKeyRecord(
             public_key=w3.to_hex(G2ProofOfPossession.SkToPk(private_key)),

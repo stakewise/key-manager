@@ -6,11 +6,12 @@ from typing import List
 
 import click
 import yaml
+from eth_utils import add_0x_prefix
 from web3 import Web3
 
 from key_manager.contrib import is_lists_equal
 from key_manager.database import Database, check_db_connection
-from key_manager.encoder import Decoder
+from key_manager.encryptor import Encryptor
 from key_manager.validators import validate_db_uri, validate_env_name
 
 DECRYPTION_KEY_ENV = 'DECRYPTION_KEY'
@@ -46,12 +47,12 @@ def sync_web3signer(db_url: str, output_dir: str, decryption_key_env: str) -> No
 
     # decrypt private keys
     decryption_key = os.environ[decryption_key_env]
-    decoder = Decoder(decryption_key)
+    decryptor = Encryptor(decryption_key)
     private_keys: List[str] = []
     for key_record in keys_records:
-        key = decoder.decrypt(data=key_record.private_key, nonce=key_record.nonce)
+        key = decryptor.decrypt(data=key_record.private_key, nonce=key_record.nonce)
         key_hex = Web3.to_hex(int(key))
-        private_keys.append(f'0x{key_hex[2:].zfill(64)}')  # pad missing leading zeros
+        private_keys.append(add_0x_prefix(key_hex))  # pad missing leading zeros
 
     if not exists(output_dir):
         mkdir(output_dir)
