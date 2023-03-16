@@ -60,7 +60,7 @@ def sync_web3signer(db_url: str, output_dir: str, decryption_key_env: str) -> No
     # check current keys
     current_keys = []
     for filename in glob.glob(os.path.join(output_dir, '*.yaml')):
-        with open(os.path.join(os.getcwd(), filename), 'r', encoding='utf-8') as f:
+        with open(filename, 'r', encoding='utf-8') as f:
             content = yaml.safe_load(f.read())
             current_keys.append(content.get('privateKey'))
 
