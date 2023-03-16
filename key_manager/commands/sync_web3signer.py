@@ -26,6 +26,7 @@ DECRYPTION_KEY_ENV = 'DECRYPTION_KEY'
 @click.option(
     '--output-dir',
     help='The folder where web3signer keystores will be saved.',
+    prompt='Enter the folder where web3signer keystores will be saved',
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
 @click.option(
