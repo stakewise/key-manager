@@ -1,3 +1,6 @@
+import json
+from multiprocessing import Pool
+from os import makedirs, path
 from pathlib import Path
 
 import click
@@ -6,11 +9,7 @@ from eth_utils import is_address, to_checksum_address
 from sw_utils import get_execution_client
 
 from key_manager.contrib import async_command, greenify
-from key_manager.credentials import (
-    export_deposit_data_json,
-    export_keystores,
-    generate_credentials,
-)
+from key_manager.credentials import Credential, CredentialManager
 from key_manager.execution import generate_vault_address
 from key_manager.password import get_or_create_password_file
 from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, NETWORKS, VAULT_TYPE
@@ -19,7 +18,6 @@ from key_manager.validators import (
     validate_eth_address,
     validate_mnemonic,
 )
-from key_manager.web3signer import Web3signer
 
 
 @click.option(
@@ -99,12 +97,6 @@ from key_manager.web3signer import Web3signer
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
 )
 @click.option(
-    '--web3signer-endpoint',
-    required=False,
-    help='The endpoint of the web3signer service for uploading the keystores.',
-    type=str,
-)
-@click.option(
     '--mnemonic-start-index',
     required=False,
     help="The index of the first validator's keys you wish to generate."
@@ -123,12 +115,6 @@ from key_manager.web3signer import Web3signer
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
     default='./mnemonic_next_index.txt',
 )
-@click.option(
-    '--no-confirm',
-    is_flag=True,
-    default=False,
-    help='Skips confirmation messages when provided.',
-)
 @click.command(help='Creates the validator keys from the mnemonic.')
 @async_command
 async def create_keys(
@@ -142,10 +128,8 @@ async def create_keys(
     deposit_data_file: str,
     keystores: str,
     password_file: str,
-    web3signer_endpoint: str,
     mnemonic_start_index: int | None,
     mnemonic_next_index_file: str,
-    no_confirm: bool,
 ) -> None:
     if not vault and admin and vault_type and execution_endpoint:
         execution_client = get_execution_client(execution_endpoint, is_poa=NETWORKS[network].IS_POA)
@@ -176,43 +160,19 @@ async def create_keys(
             with open(mnemonic_next_index_file, 'r', encoding='utf-8') as f:
                 mnemonic_start_index = int(f.read())
 
-    credentials = await generate_credentials(
+    credentials = CredentialManager.generate_credentials(
         network=network,
         vault=vault,
         mnemonic=mnemonic,
         count=count,
         start_index=mnemonic_start_index,
     )
-    deposit_data = export_deposit_data_json(credentials=credentials, filename=deposit_data_file)
+    deposit_data = _export_deposit_data_json(credentials=credentials, filename=deposit_data_file)
 
-    export_keystores(credentials=credentials, keystores_dir=keystores, password_file=password_file)
+    _export_keystores(credentials=credentials, keystores_dir=keystores, password_file=password_file)
 
     with open(mnemonic_next_index_file, 'w', encoding='utf-8') as f:
         f.write(str(mnemonic_start_index + count))
-
-    if web3signer_endpoint:
-        if not no_confirm:
-            click.confirm(
-                f'Generated {count} keystores, upload them to the Web3Signer?',
-                default=True,
-                abort=True,
-            )
-        password = get_or_create_password_file(password_file)
-        keys = []
-        with click.progressbar(
-            credentials,
-            label='Uploading keystores to web3signer\t\t',
-            show_percent=False,
-            show_pos=True,
-        ) as _credentials:
-            for credential in _credentials:
-                keys.append(credential.encrypt_signing_keystore(password).as_json())
-        Web3signer(web3signer_endpoint).upload_keys(
-            keystores=keys,
-            passwords=[password] * len(keys),
-        )
-
-    click.clear()
 
     click.echo(
         f'Done. Generated {greenify(count)} keys for {greenify(vault)} vault.\n'
@@ -220,3 +180,51 @@ async def create_keys(
         f'Deposit data saved to {greenify(deposit_data)} file\n'
         f'Next mnemonic start index saved to {greenify(mnemonic_next_index_file)} file',
     )
+
+
+def _export_deposit_data_json(credentials: list[Credential], filename: str) -> str:
+    with click.progressbar(
+        length=len(credentials),
+        label='Generating deposit data JSON\t\t',
+        show_percent=False,
+        show_pos=True,
+    ) as bar, Pool() as pool:
+        results = [
+            pool.apply_async(
+                cred.deposit_datum_dict,
+                callback=lambda x: bar.update(1),
+            )
+            for cred in credentials
+        ]
+        for result in results:
+            result.wait()
+        deposit_data = [result.get() for result in results]
+
+    makedirs(path.dirname(path.abspath(filename)), exist_ok=True)
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(deposit_data, f, default=lambda x: x.hex())
+    return filename
+
+
+def _export_keystores(
+    credentials: list[Credential], keystores_dir: str, password_file: str
+) -> None:
+    makedirs(path.abspath(keystores_dir), exist_ok=True)
+    password = get_or_create_password_file(password_file)
+    with click.progressbar(
+        credentials,
+        label='Exporting validator keystores\t\t',
+        show_percent=False,
+        show_pos=True,
+    ) as bar, Pool() as pool:
+        results = [
+            pool.apply_async(
+                cred.save_signing_keystore,
+                kwds=dict(password=password, folder=keystores_dir),
+                callback=lambda x: bar.update(1),
+            )
+            for cred in credentials
+        ]
+
+        for result in results:
+            result.wait()

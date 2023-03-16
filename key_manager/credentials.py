@@ -1,16 +1,13 @@
-import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from functools import cached_property
 from multiprocessing import Pool
-from os import makedirs, path
+from os import path
 
 import click
 import milagro_bls_binding as bls
-from eth_account import Account
 from eth_typing import BLSPrivateKey, HexAddress, HexStr
-from eth_utils import add_0x_prefix
 from py_ecc.bls import G2ProofOfPossession
 from staking_deposit.key_handling.key_derivation.mnemonic import get_seed
 from staking_deposit.key_handling.key_derivation.path import path_to_nodes
@@ -31,8 +28,7 @@ from web3 import Web3
 from web3._utils import request
 
 from key_manager import KEY_MANAGER_VERSION
-from key_manager.contrib import async_multiprocessing_proxy, chunkify
-from key_manager.password import get_or_create_password_file
+from key_manager.contrib import chunkify
 from key_manager.settings import NETWORKS
 
 # Set path as EIP-2334 format
@@ -109,137 +105,76 @@ class Credential:
         return datum_dict
 
 
-async def generate_credentials_chunk(
-    indexes: list[int],
-    network: str,
-    vault: HexAddress,
-    mnemonic: str,
-) -> list[Credential]:
-    # Hack to run web3 sessions in multiprocessing mode
-    # pylint: disable-next=protected-access
-    request._async_session_pool = ThreadPoolExecutor(max_workers=1)
+class CredentialManager:
 
-    credentials: list[Credential] = []
-    for index in indexes:
-        credential = _generate_credential(network, vault, mnemonic, index)
-        credentials.append(credential)
-    return credentials
+    @staticmethod
+    def generate_credentials(
+        network: str, vault: HexAddress, mnemonic: str, count: int, start_index: int
+    ) -> list[Credential]:
+        credentials: list[Credential] = []
+        with click.progressbar(
+            length=count,
+            label='Creating validator keys:\t\t',
+            show_percent=False,
+            show_pos=True,
+        ) as bar, Pool() as pool:
 
+            def bar_updated(result):
+                bar.update(len(result))
 
-async def generate_credentials(
-    network: str, vault: HexAddress, mnemonic: str, count: int, start_index: int
-) -> list[Credential]:
-    credentials: list[Credential] = []
-    with click.progressbar(
-        length=count,
-        label='Creating validator keys:\t\t',
-        show_percent=False,
-        show_pos=True,
-    ) as bar, Pool() as pool:
-
-        def bar_updated(result):
-            bar.update(len(result))
-
-        results = []
-        indexes = range(start_index, start_index + count)
-        for chunk_indexes in chunkify(indexes, 50):
-            results.append(
-                pool.apply_async(
-                    async_multiprocessing_proxy,
-                    [
-                        generate_credentials_chunk,
-                        chunk_indexes,
-                        network,
-                        vault,
-                        mnemonic,
-                    ],
-                    callback=bar_updated,
+            results = []
+            indexes = range(start_index, start_index + count)
+            for chunk_indexes in chunkify(indexes, 50):
+                results.append(
+                    pool.apply_async(
+                        CredentialManager._generate_credentials_chunk,
+                        [
+                            chunk_indexes,
+                            network,
+                            vault,
+                            mnemonic,
+                        ],
+                        callback=bar_updated,
+                    )
                 )
-            )
 
-        for result in results:
-            result.wait()
-        for result in results:
-            credentials.extend(result.get())
+            for result in results:
+                result.wait()
+            for result in results:
+                credentials.extend(result.get())
 
-    return credentials
+        return credentials
 
+    @staticmethod
+    def _generate_credentials_chunk(
+        indexes: list[int],
+        network: str,
+        vault: HexAddress,
+        mnemonic: str,
+    ) -> list[Credential]:
+        # Hack to run web3 sessions in multiprocessing mode
+        # pylint: disable-next=protected-access
+        request._async_session_pool = ThreadPoolExecutor(max_workers=1)
 
-def _generate_credential(network: str, vault: HexAddress, mnemonic: str, index: int) -> Credential:
-    """Returns the signing key of the mnemonic at a specific index."""
-    seed = get_seed(mnemonic=mnemonic, password='')  # nosec
-    private_key = BLSPrivateKey(derive_master_SK(seed))
-    signing_key_path = f'm/{PURPOSE}/{COIN_TYPE}/{index}/0/0'
-    nodes = path_to_nodes(signing_key_path)
+        credentials: list[Credential] = []
+        for index in indexes:
+            credential = CredentialManager._generate_credential(network, vault, mnemonic, index)
+            credentials.append(credential)
+        return credentials
 
-    for node in nodes:
-        private_key = BLSPrivateKey(derive_child_SK(parent_SK=private_key, index=node))
+    @staticmethod
+    def _generate_credential(
+        network: str, vault: HexAddress, mnemonic: str, index: int
+    ) -> Credential:
+        """Returns the signing key of the mnemonic at a specific index."""
+        seed = get_seed(mnemonic=mnemonic, password='')  # nosec
+        private_key = BLSPrivateKey(derive_master_SK(seed))
+        signing_key_path = f'm/{PURPOSE}/{COIN_TYPE}/{index}/0/0'
+        nodes = path_to_nodes(signing_key_path)
 
-    return Credential(private_key=private_key, path=signing_key_path, network=network, vault=vault)
+        for node in nodes:
+            private_key = BLSPrivateKey(derive_child_SK(parent_SK=private_key, index=node))
 
-
-def export_deposit_data_json(credentials: list[Credential], filename: str) -> str:
-    with click.progressbar(
-        length=len(credentials),
-        label='Generating deposit data JSON\t\t',
-        show_percent=False,
-        show_pos=True,
-    ) as bar, Pool() as pool:
-        results = [
-            pool.apply_async(
-                cred.deposit_datum_dict,
-                callback=lambda x: bar.update(1),
-            )
-            for cred in credentials
-        ]
-        for result in results:
-            result.wait()
-        deposit_data = [result.get() for result in results]
-
-    makedirs(path.dirname(path.abspath(filename)), exist_ok=True)
-    with open(filename, 'w', encoding='utf-8') as f:
-        json.dump(deposit_data, f, default=lambda x: x.hex())
-    return filename
-
-
-def export_keystores(credentials: list[Credential], keystores_dir: str, password_file: str) -> None:
-    makedirs(path.abspath(keystores_dir), exist_ok=True)
-    password = get_or_create_password_file(password_file)
-    with click.progressbar(
-        credentials,
-        label='Exporting validator keystores\t\t',
-        show_percent=False,
-        show_pos=True,
-    ) as bar, Pool() as pool:
-        results = [
-            pool.apply_async(
-                cred.save_signing_keystore,
-                kwds=dict(password=password, folder=keystores_dir),
-                callback=lambda x: bar.update(1),
-            )
-            for cred in credentials
-        ]
-
-        for result in results:
-            result.wait()
-
-
-def load_deposit_data_pub_keys(deposit_data_file: str) -> list[HexStr]:
-    with open(deposit_data_file, 'r', encoding='utf-8') as f:
-        deposit_data = json.load(f)
-
-    return [add_0x_prefix(data['pubkey']) for data in deposit_data]
-
-
-def generate_encrypted_wallet(mnemonic: str, wallet_dir: str) -> str:
-    Account.enable_unaudited_hdwallet_features()
-
-    account = Account().from_mnemonic(mnemonic=mnemonic)
-    password = get_or_create_password_file(path.join(wallet_dir, 'password.txt'))
-    encrypted_data = Account.encrypt(account.key, password=password)
-
-    wallet_name = f'{account.address}-{int(time.time())}.json'
-    with open(path.join(wallet_dir, wallet_name), 'w', encoding='utf-8') as f:
-        json.dump(encrypted_data, f, default=lambda x: x.hex())
-
-    return wallet_name
+        return Credential(
+            private_key=private_key, path=signing_key_path, network=network, vault=vault
+        )
