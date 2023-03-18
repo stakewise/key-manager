@@ -1,6 +1,6 @@
 # Stakewise V3 key manager
 
-Key manager generates validators keys and deposit data for the validators, allow to generate mnemonic and hot wallet. Also it's helps to manage validator's keys in web3signer infrastructure.
+Key manager generates validators keys and deposit data for the validators, generates mnemonic and hot wallet. Also it helps to manage validators keys in web3signer infrastructure.
 
 See [releases page](https://github.com/stakewise/key-manager/releases) to download and decompress the corresponding binary files.
 
@@ -9,7 +9,9 @@ See [releases page](https://github.com/stakewise/key-manager/releases) to downlo
 ### 1. Create mnemonic
 Creates the mnemonic used to derive validator keys.
 ```bash
-# ./key-manager create-mnemonic --language english
+./key-manager create-mnemonic --language english
+```
+```
 This is your seed phrase. Write it down and store it safely, it is the ONLY way to recover your validator keys.
 
 pumpkin anxiety private salon inquiry ....
@@ -34,7 +36,9 @@ It will allow you to restore the keys in case the Vault will get corrupted or lo
 Creates deposit data and validator keystores files for operator service:
 
 ```bash
-# ./key-manager create-keys
+./key-manager create-keys
+```
+```
 Enter the number of the validator keys to generate: 10
 Enter the mnemonic for generating the validator keys: pumpkin anxiety private salon inquiry ....
 Enter the network name (goerli) [goerli]:
@@ -56,11 +60,11 @@ Next mnemonic start index saved to ./mnemonic_next_index.txt file
 - `--vault` or `--withdrawal-address` -The withdrawal address where the funds will be sent after validators’ withdrawals.
 - `--admin` - The vault admin address.
 - `--vault-type` - The vault type.
-- `--execution_endpoint` - The endpoint of the execution node used for computing the withdrawal address..
+- `--execution_endpoint` - The endpoint of the execution node used for computing the with.
 - `--deposit-data-file` - The path to store the deposit data file. Defaults to ./data/deposit_data.json.
-- `--keystores` -The directory to store the validator keys in the EIP-2335 standard. Defaults to ./data/keystores.
+- `--keystores` - The directory to store the validator keys in the EIP-2335 standard. Defaults to ./data/keystores.
 - `--password-file` - The path to store randomly generated password for encrypting the keystores. Defaults to ./data/keystores/password.txt.
-- `--mnemonic-start-index` - The index of the first validator's keys you wish to generate. If this is your first time generating keys with this mnemonic, use 0. If you have generated keys using this mnemonic before, add --mnemonic-next-index-file flag or specify the next index from which you want to start generating keys from (eg, if you've generated 4 keys before (keys #0, #1, #2, #3) then enter 4 here.
+- `--mnemonic-start-index` - The index of the first validator keys you wish to generate. If this is your first time generating keys with this mnemonic, use 0. If you have generated keys using this mnemonic before, add --mnemonic-next-index-file flag or specify the next index from which you want to start generating keys from (eg, if you've generated 4 keys before (keys #0, #1, #2, #3) then enter 4 here.
 - `--mnemonic-next-index-file` - The path where to store the mnemonic index to use for generating next validator keys. Used to always generate unique validator keys. Defaults to ./mnemonic_next_index.txt.
 
 
@@ -69,7 +73,9 @@ Next mnemonic start index saved to ./mnemonic_next_index.txt file
 Creates the encrypted hot wallet from the mnemonic.
 
 ```bash
-# ./key-manager  create-wallet
+./key-manager  create-wallet
+```
+```
 Enter the mnemonic for generating the wallet: pumpkin anxiety private salon inquiry ...
 Done. Wallet 0xf5fF7...B914a-1677838759.json saved to ./wallet directory
 ```
@@ -80,10 +86,12 @@ Done. Wallet 0xf5fF7...B914a-1677838759.json saved to ./wallet directory
 ### Web3Signer infrastructure commands
 
 ### 1. Update database
-Encrypt and load validator keys from keystore files into the database
+The command encrypts and loads validator keys from keystore files into the database
 
 ```bash
-# ./key-manager update-db --db-url postgresql://postgres:postgres@localhost:5432/web3signer --keystores-dir ./data/keystores --keystores-password-file ./data/keystores/password.txt
+./key-manager update-db --db-url postgresql://postgres:postgres@localhost:5432/web3signer --keystores-dir ./data/keystores --keystores-password-file ./data/keystores/password.txt
+```
+```
 Loading keystores...              [####################################]  10/10
 Encrypting database keys...
 Generated 10 validator keys, upload them to the database? [Y/n]: Y
@@ -103,7 +111,9 @@ It will allow you to upload new keystores in the existing database**
 ### 2. Sync validator configs
 Creates validator configuration files for Lighthouse, Prysm, and Teku clients to sign data using keys form database.
 ```bash
-# ./key-manager sync-validator
+./key-manager sync-validator
+```
+```
 Enter the recipient address for MEV & priority fees: 0xB31...1
 Enter the endpoint of the web3signer service: https://web3signer-example.com
 Enter the database connection string, ex. 'postgresql://username:pass@hostname/dbname': postgresql://postgres:postgres@localhost/web3signer
@@ -134,7 +144,9 @@ Fetch and decrypt keys for web3signer and store them as keypairs in the output_d
 
 Set `DECRYPTION_KEY` env, use value generated by `update-db` command
 ```bash
-# ./key-manager  sync-web3signer
+./key-manager  sync-web3signer
+```
+```
 Enter the folder where web3signer keystores will be saved: /data/web3signer
 Enter the database connection string, ex. 'postgresql://username:pass@hostname/dbname': postgresql://postgres:postgres@localhost/web3signer
 
