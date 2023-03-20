@@ -69,4 +69,5 @@ COPY . ./
 ENV PYTHONPATH="${PYTHONPATH}:/app"
 
 # Start application
-ENTRYPOINT ["python", "key_manager/main.py"]
+ENTRYPOINT ["python"]
+CMD ["key_manager/main.py"]
