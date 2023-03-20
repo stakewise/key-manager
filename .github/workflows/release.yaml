@@ -17,6 +17,7 @@ jobs:
                 export PYTHONHASHSEED=42
                 export BUILD_FILE_NAME=key-manager-${RELEASE_VERSION}-linux-amd64;
                 mkdir ${BUILD_FILE_NAME};
+                poetry version ${RELEASE_VERSION}
                 poetry run pyinstaller \
                   --onefile \
                   --hidden-import multiaddr.codecs.uint16be \
@@ -32,12 +33,13 @@ jobs:
                 cp ${BUILD_FILE_NAME}.tar.gz /tmp/artifacts;
                 sha256sum ${BUILD_FILE_NAME}.tar.gz | head -c 64 > /tmp/artifacts/${BUILD_FILE_NAME}.sha256;
 
-          - OS: macos-11
+          - OS: macos-12
             PYTHON_VERSION: 3.10.10
             BUILD_CMD: |
               export PYTHONHASHSEED=42
               export BUILD_FILE_NAME=key-manager-${RELEASE_VERSION}-darwin-amd64;
               mkdir ${BUILD_FILE_NAME};
+              poetry version ${RELEASE_VERSION}
               poetry run pyinstaller \
                   --onefile \
                   --hidden-import multiaddr.codecs.uint16be \
@@ -59,6 +61,7 @@ jobs:
               $RELEASE_VERSION = $env:GITHUB_REF.replace('refs/tags/', '')
               $BUILD_FILE_NAME = "key-manager-" + $RELEASE_VERSION + "-windows-amd64"
               $BUILD_FILE_NAME_PATH = ".\" + $BUILD_FILE_NAME
+              poetry version ${RELEASE_VERSION}
               poetry run pyinstaller --onefile --hidden-import multiaddr.codecs.uint16be --hidden-import multiaddr.codecs.idna --collect-data key_manager ./key_manager/main.py --name key-manager --distpath $BUILD_FILE_NAME_PATH
               poetry run pyinstaller `
                   --onefile `
