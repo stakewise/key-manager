@@ -1,3 +1,5 @@
+import multiprocessing
+
 import click
 
 from key_manager.commands.create_keys import create_keys
@@ -22,4 +24,8 @@ cli.add_command(sync_validator)
 
 
 if __name__ == '__main__':
+    # Pyinstaller hacks
+    multiprocessing.set_start_method('spawn')
+    multiprocessing.freeze_support()
+
     cli()
