@@ -18,15 +18,8 @@ jobs:
                 export BUILD_FILE_NAME=key-manager-${RELEASE_VERSION}-linux-amd64;
                 mkdir ${BUILD_FILE_NAME};
                 poetry run pyinstaller \
-                  --onefile \
-                  --hidden-import multiaddr.codecs.uint16be \
-                  --hidden-import multiaddr.codecs.idna \
-                  --collect-data key_manager \
-                  --add-data ./key_manager/abis:key_manager/abis/ \
-                  --add-data ./key_manager/word_lists:key_manager/word_lists/ \
-                  --name key-manager \
-                  --distpath ./${BUILD_FILE_NAME} \
-                  ./key_manager/main.py;
+                --distpath ./${BUILD_FILE_NAME} \
+                ./key-manager.spec;
                 tar -zcvf ${BUILD_FILE_NAME}.tar.gz ./${BUILD_FILE_NAME};
                 mkdir /tmp/artifacts;
                 cp ${BUILD_FILE_NAME}.tar.gz /tmp/artifacts;
@@ -39,15 +32,8 @@ jobs:
               export BUILD_FILE_NAME=key-manager-${RELEASE_VERSION}-darwin-amd64;
               mkdir ${BUILD_FILE_NAME};
               poetry run pyinstaller \
-                  --onefile \
-                  --hidden-import multiaddr.codecs.uint16be \
-                  --hidden-import multiaddr.codecs.idna \
-                  --collect-data key_manager \
-                  --add-data ./key_manager/abis:key_manager/abis/ \
-                  --add-data ./key_manager/word_lists:key_manager/word_lists/ \
-                  --name key-manager \
-                  --distpath ./${BUILD_FILE_NAME} \
-                  ./key_manager/main.py;
+                --distpath ./${BUILD_FILE_NAME} \
+                ./key-manager.spec;
               tar -zcvf ${BUILD_FILE_NAME}.tar.gz ./${BUILD_FILE_NAME};
               mkdir /tmp/artifacts;
               cp ${BUILD_FILE_NAME}.tar.gz /tmp/artifacts;
@@ -59,17 +45,9 @@ jobs:
               $RELEASE_VERSION = $env:GITHUB_REF.replace('refs/tags/', '')
               $BUILD_FILE_NAME = "key-manager-" + $RELEASE_VERSION + "-windows-amd64"
               $BUILD_FILE_NAME_PATH = ".\" + $BUILD_FILE_NAME
-              poetry run pyinstaller --onefile --hidden-import multiaddr.codecs.uint16be --hidden-import multiaddr.codecs.idna --collect-data key_manager ./key_manager/main.py --name key-manager --distpath $BUILD_FILE_NAME_PATH
               poetry run pyinstaller `
-                  --onefile `
-                  --hidden-import multiaddr.codecs.uint16be `
-                  --hidden-import multiaddr.codecs.idna `
-                  --collect-data key_manager `
-                  --add-data "./key_manager/abis;key_manager/abis/" `
-                  --add-data "./key_manager/word_lists;key_manager/word_lists/" `
-                  --name key-manager `
-                  --distpath ./${BUILD_FILE_NAME} `
-                  ./key_manager/main.py;
+                --distpath ./${BUILD_FILE_NAME} `
+                ./key-manager.spec;
               $ZIP_FILE_NAME = $BUILD_FILE_NAME + ".zip"
               Compress-Archive -Path $BUILD_FILE_NAME_PATH -DestinationPath $ZIP_FILE_NAME
               mkdir \tmp\artifacts
