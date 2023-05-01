@@ -18,24 +18,25 @@ def test_merge_deposit_files():
     ]
 
     with tempfile.NamedTemporaryFile('w', delete=False) as file1, \
-            tempfile.NamedTemporaryFile('w', delete=False) as file2, \
-            tempfile.NamedTemporaryFile('w', delete=False) as merged_file:
+            tempfile.NamedTemporaryFile('w', delete=False) as file2:
         json.dump(file1_content, file1)
         json.dump(file2_content, file2)
 
         file1.flush()
         file2.flush()
 
+        merged_file = _generate_temp_filepath()
+
         runner = click.testing.CliRunner()
         result = runner.invoke(merge_deposit, [
             '-d', file1.name,
             '-d', file2.name,
-            '-m', merged_file.name,
+            '-m', merged_file,
         ])
 
         assert result.exit_code == 0
 
-        with open(merged_file.name, 'r', encoding='utf-8') as result:
+        with open(merged_file, 'r', encoding='utf-8') as result:
             merged_json = json.load(result)
 
         expected_merged_json = [
@@ -49,4 +50,12 @@ def test_merge_deposit_files():
 
     os.remove(file1.name)
     os.remove(file2.name)
-    os.remove(merged_file.name)
+    os.remove(merged_file)
+
+
+def _generate_temp_filepath(extension=''):
+    temp_dir = tempfile.gettempdir()
+    temp_filename = f'{tempfile.mktemp()}{extension}'
+    temp_filepath = os.path.join(temp_dir, temp_filename)
+
+    return temp_filepath
