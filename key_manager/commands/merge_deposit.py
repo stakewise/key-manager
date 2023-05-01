@@ -22,7 +22,13 @@ import click
     'Specify the full path including the filename. Example: -m /path/to/merged_file.json',
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
 )
-@click.command(help='Merges multiple deposit data files into one.')
+@click.command(help='Merges multiple deposit data files into one. '
+               'The merge process will take JSON elements from each input '
+               'file in a round-robin manner. It starts by taking the first '
+               'JSON element from each file, then the second, and so on. '
+               'The merged JSON elements are written to the specified output file. '
+               'If a file has fewer elements than others, the process continues with '
+               'the remaining files until all elements are merged.')
 def merge_deposit(deposit_data: tuple, merged_file_path: str) -> None:
     if len(deposit_data) <= 1:
         raise click.BadParameter('You must provide at least 2 deposit data files')
@@ -41,7 +47,7 @@ def merge_deposit(deposit_data: tuple, merged_file_path: str) -> None:
                 merged_json.append(element)
 
     if os.path.exists(merged_file_path):
-        os.remove(merged_file_path)
+        raise click.BadParameter(f'{merged_file_path} already exists.')
 
     with open(merged_file_path, 'w', encoding='utf-8') as merged_file:
         json.dump(merged_json, merged_file)
