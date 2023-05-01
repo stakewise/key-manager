@@ -2,7 +2,9 @@ import json
 import os
 import tempfile
 
-from key_manager.commands.merge_deposit import merge_deposit_files
+import click.testing
+
+from key_manager.commands.merge_deposit import merge_deposit
 
 
 def test_merge_deposit_files():
@@ -24,7 +26,14 @@ def test_merge_deposit_files():
         file1.flush()
         file2.flush()
 
-        merge_deposit_files((file1.name, file2.name), merged_file.name)
+        runner = click.testing.CliRunner()
+        result = runner.invoke(merge_deposit, [
+            '-d', file1.name,
+            '-d', file2.name,
+            '-m', merged_file.name,
+        ])
+
+        assert result.exit_code == 0
 
         with open(merged_file.name, 'r', encoding='utf-8') as result:
             merged_json = json.load(result)
@@ -39,3 +48,5 @@ def test_merge_deposit_files():
         assert merged_json == expected_merged_json
 
     os.remove(file1.name)
+    os.remove(file2.name)
+    os.remove(merged_file.name)

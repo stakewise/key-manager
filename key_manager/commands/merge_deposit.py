@@ -24,12 +24,8 @@ import click
 )
 @click.command(help='Merges multiple deposit data files into one.')
 def merge_deposit(deposit_data: tuple, merged_file_path: str) -> None:
-    merge_deposit_files(deposit_data, merged_file_path)
-
-
-def merge_deposit_files(deposit_data: tuple, merged_file_path: str) -> None:
     if len(deposit_data) <= 1:
-        raise ValueError('You must provide at least 2 deposit data files')
+        raise click.BadParameter('You must provide at least 2 deposit data files')
 
     json_data_list = []
 
