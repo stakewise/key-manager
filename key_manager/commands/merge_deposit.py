@@ -10,19 +10,22 @@ import click
     '-d',
     required=True,
     multiple=True,
-    help='Path to the deposit data file(s). To specify multiple deposit data files, use the -d option multiple times. Example: -d /path/to/file1 -d /path/to/file2',
+    help='Path to the deposit data file(s). To specify multiple deposit data files, '
+    'use the -d option multiple times. Example: -d /path/to/file1 -d /path/to/file2',
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
 )
 @click.option(
     '--merged-file-path',
     '-m',
     required=True,
-    help='Path where the merged deposit file will be created. Specify the full path including the filename. Example: -m /path/to/merged_file.json',
+    help='Path where the merged deposit file will be created. '
+    'Specify the full path including the filename. Example: -m /path/to/merged_file.json',
     type=click.Path(exists=False, file_okay=True, dir_okay=False),
 )
 @click.command(help='Merges multiple deposit data files into one.')
 def merge_deposit(deposit_data: tuple, merged_file_path: str) -> None:
     merge_deposit_files(deposit_data, merged_file_path)
+
 
 def merge_deposit_files(deposit_data: tuple, merged_file_path: str) -> None:
     if len(deposit_data) <= 1:
@@ -31,7 +34,7 @@ def merge_deposit_files(deposit_data: tuple, merged_file_path: str) -> None:
     json_data_list = []
 
     for file_path in deposit_data:
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             json_data_list.append(json.load(file))
 
     merged_json = []
@@ -44,5 +47,5 @@ def merge_deposit_files(deposit_data: tuple, merged_file_path: str) -> None:
     if os.path.exists(merged_file_path):
         os.remove(merged_file_path)
 
-    with open(merged_file_path, 'w') as merged_file:
+    with open(merged_file_path, 'w', encoding='utf-8') as merged_file:
         json.dump(merged_json, merged_file)
