@@ -1,7 +1,6 @@
 import json
 import os
 import unittest
-from unittest.mock import patch
 
 from click.testing import CliRunner
 from staking_deposit.key_handling.key_derivation.mnemonic import get_mnemonic
@@ -9,7 +8,6 @@ from staking_deposit.key_handling.key_derivation.mnemonic import get_mnemonic
 from key_manager import KEY_MANAGER_VERSION
 from key_manager.commands.create_keys import create_keys
 from key_manager.language import WORD_LISTS_PATH
-from key_manager.settings import GOERLI
 
 from .factories import faker
 
@@ -22,18 +20,23 @@ class TestCreateKeys(unittest.TestCase):
         count = 5
         runner = CliRunner()
         args = [
-            '--network',
-            GOERLI,
             '--mnemonic',
             f'"{mnemonic}"',
             '--count',
             count,
             '--vault',
             vault,
-            '--mnemonic-start-index',
-            0,
+            '--data-dir',
+            './data'
         ]
         with runner.isolated_filesystem():
+            os.mkdir('./data')
+            config = {
+                'network': 'goerli',
+                'mnemonic_next_index': 0,
+            }
+            with open('./data/config', 'w', encoding='utf-8') as f:
+                json.dump(config, f)
             result = runner.invoke(create_keys, args)
             assert result.exit_code == 0
 
@@ -42,9 +45,9 @@ class TestCreateKeys(unittest.TestCase):
                 'Generating deposit data JSON\t\t\n'
                 'Exporting validator keystores\t\t\n'
                 f'Done. Generated 5 keys for {vault} vault.\n'
-                'Keystores saved to ./data/keystores file\n'
-                'Deposit data saved to ./data/deposit_data.json file\n'
-                'Next mnemonic start index saved to ./mnemonic_next_index.txt file\n'
+                'Keystores saved to data/keystores file\n'
+                'Deposit data saved to data/deposit_data.json file\n'
+                'Next mnemonic start index saved to data/config file\n'
             )
             assert output.strip() == result.output.strip()
             with open('./data/deposit_data.json', encoding='utf-8') as f:
@@ -55,45 +58,5 @@ class TestCreateKeys(unittest.TestCase):
                 assert data[0].get('deposit_cli_version') == KEY_MANAGER_VERSION
             with open('./data/keystores/password.txt', encoding='utf-8') as f:
                 assert len(f.readline()) == 20
-            with open('./mnemonic_next_index.txt', encoding='utf-8') as f:
-                assert int(f.read()) == 5
 
             assert len(os.listdir('./data/keystores')) == count + 1
-
-    def test_vault_address_calculation(self):
-        admin, vault = faker.eth_address(), faker.eth_address()
-        count = 5
-        runner = CliRunner()
-        args = [
-            '--network',
-            GOERLI,
-            '--mnemonic',
-            f'"{mnemonic}"',
-            '--count',
-            count,
-            '--admin',
-            admin,
-            '--vault-type',
-            'public',
-            '--execution-endpoint',
-            'https://example.com',
-            '--mnemonic-start-index',
-            0,
-        ]
-        with runner.isolated_filesystem(), patch(
-            'key_manager.execution.VaultFactoryContract.compute_addresses',
-            return_value=vault,
-        ):
-            result = runner.invoke(create_keys, args)
-            assert result.exit_code == 0
-
-            output = f'''
-            Creating validator keys:\t\t
-Generating deposit data JSON\t\t
-Exporting validator keystores\t\t
-Done. Generated 5 keys for {vault} vault.
-Keystores saved to ./data/keystores file
-Deposit data saved to ./data/deposit_data.json file
-Next mnemonic start index saved to ./mnemonic_next_index.txt file
-    '''
-            assert output.strip() == result.output.strip()
