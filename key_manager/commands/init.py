@@ -1,14 +1,15 @@
-import tempfile
-from glob import glob
 import json
-import click
+import tempfile
 from pathlib import Path
 
-from key_manager.language import LANGUAGES, create_new_mnemonic
-from key_manager.credentials import CredentialManager
-from key_manager.validators import validate_eth_address
-from key_manager.settings import AVAILABLE_NETWORKS, GOERLI, NETWORKS, BASE_DIR
+import click
+from eth_typing import HexAddress
+
 from key_manager.commands.create_keys import _export_keystores
+from key_manager.credentials import CredentialManager
+from key_manager.language import LANGUAGES, create_new_mnemonic
+from key_manager.settings import AVAILABLE_NETWORKS, BASE_DIR, GOERLI
+from key_manager.validators import validate_eth_address
 
 
 @click.option(
@@ -46,14 +47,14 @@ from key_manager.commands.create_keys import _export_keystores
 def init(
     language: str,
     no_verify: bool,
-    vault: str,
+    vault: HexAddress,
     network: str,
 ) -> None:
     vault_dir = Path(BASE_DIR) / vault
     try:
         vault_dir.mkdir(parents=True, exist_ok=False)
     except FileExistsError as e:
-        raise click.ClickException(e)
+        raise click.ClickException(f'{e}')
 
     if not language:
         language = click.prompt(
@@ -63,12 +64,12 @@ def init(
         )
     mnemonic = create_new_mnemonic(language, skip_test=no_verify)
 
-    first_public_key = _get_first_public_key(network, vault, mnemonic) 
+    first_public_key = _get_first_public_key(network, vault, str(mnemonic))
 
     config = {
-        "network": network,
-        "mnemonic_next_index": 0,
-        "first_public_key": first_public_key
+        'network': network,
+        'mnemonic_next_index': 0,
+        'first_public_key': first_public_key
     }
     try:
         with (vault_dir / 'config').open('w') as f:
@@ -78,8 +79,8 @@ def init(
 
     click.secho(f'Configuration saved in {vault_dir}/config', bold=True, fg='green')
 
-    
-def _get_first_public_key(network: str, vault: str, mnemonic: str) -> str:
+
+def _get_first_public_key(network: str, vault: HexAddress, mnemonic: str) -> str:
     credentials = CredentialManager.generate_credentials(
         network=network,
         vault=vault,
@@ -92,8 +93,15 @@ def _get_first_public_key(network: str, vault: str, mnemonic: str) -> str:
         base_dir = Path(temp_dir)
         keystores_dir = base_dir / 'keystores'
         password_file = keystores_dir / 'password.txt'
-        _export_keystores(credentials=credentials, keystores_dir=str(keystores_dir), password_file=str(password_file))
-        keystore_files = sorted(keystores_dir.glob('keystore-*'), key=lambda path: path.stat().st_ctime)
+        _export_keystores(
+            credentials=credentials,
+            keystores_dir=str(keystores_dir),
+            password_file=str(password_file)
+        )
+        keystore_files = sorted(
+            keystores_dir.glob('keystore-*'),
+            key=lambda path: path.stat().st_ctime
+        )
         try:
             with keystore_files[0].open('r') as f:
                 data = json.load(f)

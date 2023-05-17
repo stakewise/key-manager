@@ -14,7 +14,14 @@ mnemonic = ' '.join([faker.word() for x in range(24)])
 class TestCreateMnemonic(unittest.TestCase):
     def test_basic(self, mnemonic_mock):
         runner = CliRunner()
-        args = ['--language', 'english', '--vault', '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3', '--network', 'goerli']
+        args = [
+            '--language',
+            'english',
+            '--vault',
+            '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3',
+            '--network',
+            'goerli'
+        ]
         result = runner.invoke(init, args, input=f'a\n{mnemonic}\n')
         assert result.exit_code == 0
         mnemonic_mock.assert_called_once()
@@ -23,7 +30,14 @@ class TestCreateMnemonic(unittest.TestCase):
 
     def test_bad_verify(self, mnemonic_mock):
         runner = CliRunner()
-        args = ['--language', 'english', '--vault', '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3', '--network', 'goerli']
+        args = [
+            '--language',
+            'english',
+            '--vault',
+            '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3',
+            '--network',
+            'goerli'
+        ]
         result = runner.invoke(init, args, input=f'a\n{mnemonic} bad\na\n{mnemonic}\n')
         assert result.exit_code == 0
         mnemonic_mock.assert_called_once()
@@ -32,7 +46,15 @@ class TestCreateMnemonic(unittest.TestCase):
 
     def test_no_verify(self, mnemonic_mock):
         runner = CliRunner()
-        args = ['--language', 'english', '--no-verify', '--vault', '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3', '--network', 'goerli']
+        args = [
+            '--language',
+            'english',
+            '--no-verify',
+            '--vault',
+            '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3',
+            '--network',
+            'goerli'
+        ]
         result = runner.invoke(init, args)
         assert result.exit_code == 0
         mnemonic_mock.assert_called_once()
