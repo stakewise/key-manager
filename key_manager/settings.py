@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 
 from ens.constants import EMPTY_ADDR_HEX
 from eth_typing import ChecksumAddress, HexStr
@@ -55,3 +56,5 @@ NETWORKS = {
 AVAILABLE_NETWORKS = [GOERLI]
 
 DEFAULT_RETRY_TIME = 30
+
+BASE_DIR = Path.home() / '.stakewise'

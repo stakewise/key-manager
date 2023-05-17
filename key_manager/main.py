@@ -3,8 +3,8 @@ import multiprocessing
 import click
 
 from key_manager.commands.create_keys import create_keys
-from key_manager.commands.create_mnemonic import create_mnemonic
 from key_manager.commands.create_wallet import create_wallet
+from key_manager.commands.init import init
 from key_manager.commands.merge_deposit import merge_deposit
 from key_manager.commands.sync_validator import sync_validator
 from key_manager.commands.sync_web3signer import sync_web3signer
@@ -16,7 +16,7 @@ def cli() -> None:
     pass
 
 
-cli.add_command(create_mnemonic)
+cli.add_command(init)
 cli.add_command(create_keys)
 cli.add_command(create_wallet)
 cli.add_command(merge_deposit)

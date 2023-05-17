@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 from click.testing import CliRunner
 
-from key_manager.commands.create_mnemonic import create_mnemonic
+from key_manager.commands.init import init
 
 from .factories import faker
 
@@ -14,8 +14,8 @@ mnemonic = ' '.join([faker.word() for x in range(24)])
 class TestCreateMnemonic(unittest.TestCase):
     def test_basic(self, mnemonic_mock):
         runner = CliRunner()
-        args = ['--language', 'english']
-        result = runner.invoke(create_mnemonic, args, input=f'a\n{mnemonic}\n')
+        args = ['--language', 'english', '--vault', '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3', '--network', 'goerli']
+        result = runner.invoke(init, args, input=f'a\n{mnemonic}\n')
         assert result.exit_code == 0
         mnemonic_mock.assert_called_once()
         assert mnemonic in result.output.strip()
@@ -23,8 +23,8 @@ class TestCreateMnemonic(unittest.TestCase):
 
     def test_bad_verify(self, mnemonic_mock):
         runner = CliRunner()
-        args = ['--language', 'english']
-        result = runner.invoke(create_mnemonic, args, input=f'a\n{mnemonic} bad\na\n{mnemonic}\n')
+        args = ['--language', 'english', '--vault', '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3', '--network', 'goerli']
+        result = runner.invoke(init, args, input=f'a\n{mnemonic} bad\na\n{mnemonic}\n')
         assert result.exit_code == 0
         mnemonic_mock.assert_called_once()
         assert mnemonic in result.output.strip()
@@ -32,8 +32,8 @@ class TestCreateMnemonic(unittest.TestCase):
 
     def test_no_verify(self, mnemonic_mock):
         runner = CliRunner()
-        args = ['--language', 'english', '--no-verify']
-        result = runner.invoke(create_mnemonic, args)
+        args = ['--language', 'english', '--no-verify', '--vault', '0xC4d5A18CAC23Dc057A20d3220FfeCA2D3092D3D3', '--network', 'goerli']
+        result = runner.invoke(init, args)
         assert result.exit_code == 0
         mnemonic_mock.assert_called_once()
         assert result.output.strip() == mnemonic.strip()
@@ -41,6 +41,6 @@ class TestCreateMnemonic(unittest.TestCase):
     def test_bad_language(self, *args):
         runner = CliRunner()
         args = ['--language', 'bad', '--no-verify']
-        result = runner.invoke(create_mnemonic, args)
+        result = runner.invoke(init, args)
         assert result.exit_code == 2
         assert "Invalid value for '--language': 'bad' is not one of" in result.output.strip()

@@ -12,11 +12,11 @@ WORD_LISTS_PATH = os.path.join(os.path.dirname(__file__), 'word_lists')
 LANGUAGES = MNEMONIC_LANG_OPTIONS.keys()
 
 
-def create_new_mnemonic(mnemonic_language: str, skip_test: bool) -> None:
+def create_new_mnemonic(mnemonic_language: str, skip_test: bool) -> None | str:
     mnemonic = get_mnemonic(language=mnemonic_language, words_path=WORD_LISTS_PATH)
     if skip_test:
         click.echo(mnemonic)
-        return
+        return ''
     test_mnemonic = ''
     while mnemonic != test_mnemonic:
         click.clear()
@@ -38,6 +38,7 @@ def create_new_mnemonic(mnemonic_language: str, skip_test: bool) -> None:
         bold=True,
         fg='green',
     )
+    return mnemonic
 
 
 def validate_mnemonic(mnemonic) -> str:

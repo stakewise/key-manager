@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+from pathlib import Path
 
 import click
 from py_ecc.bls import G2ProofOfPossession
@@ -10,6 +11,7 @@ from web3 import Web3
 from key_manager.contrib import bytes_to_str
 from key_manager.database import Database, check_db_connection
 from key_manager.encryptor import Encryptor
+from key_manager.settings import BASE_DIR
 from key_manager.typings import DatabaseKeyRecord
 from key_manager.validators import validate_db_uri
 
@@ -17,19 +19,21 @@ w3 = Web3()
 
 
 @click.option(
+    '--vault',
+    prompt='Enter your vault address',
+    help='Vault address',
+    type=str,
+)
+@click.option(
     '--keystores-dir',
     required=False,
-    help='The directory with validator keys in the EIP-2335 standard.'
-    ' Defaults to ./data/keystores.',
-    default='./data/keystores',
+    help='The directory with validator keys in the EIP-2335 standard.',
     type=click.Path(exists=True, file_okay=False, dir_okay=True),
 )
 @click.option(
     '--keystores-password-file',
     required=False,
-    help='The path to file with password for encrypting the keystores.'
-    ' Defaults to ./data/keystores/password.txt.',
-    default='./data/keystores/password.txt',
+    help='The path to file with password for encrypting the keystores.',
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
 )
 @click.option(
@@ -54,21 +58,27 @@ w3 = Web3()
 )
 @click.command(help='Encrypt and load validator keys from the keystores into the database.')
 def update_db(
-    keystores_dir: str,
-    keystores_password_file: str,
+    vault: str,
+    keystores_dir: str | Path | None,
+    keystores_password_file: str | Path | None,
     db_url: str,
     encryption_key: str | None,
     no_confirm: bool,
 ) -> None:
     check_db_connection(db_url)
 
-    with open(keystores_password_file, 'r', encoding='utf-8') as f:
+    vault_dir = BASE_DIR / vault
+
+    keystores_dir = keystores_dir or vault_dir / 'keystores'
+    keystores_password_file = keystores_password_file or vault_dir / 'keystores' / 'password.txt'
+
+    with open(str(keystores_password_file), 'r', encoding='utf-8') as f:
         keystores_password = f.read().strip()
 
     private_keys = []
 
     with click.progressbar(
-            glob.glob(os.path.join(keystores_dir, 'keystore-*.json')),
+            glob.glob(os.path.join(str(keystores_dir), 'keystore-*.json')),
             label='Loading keystores...\t\t',
             show_percent=False,
             show_pos=True,

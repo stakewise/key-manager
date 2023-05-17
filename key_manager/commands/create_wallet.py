@@ -7,6 +7,7 @@ from eth_account import Account
 
 from key_manager.contrib import greenify
 from key_manager.password import get_or_create_password_file
+from key_manager.settings import BASE_DIR
 from key_manager.validators import validate_empty_dir, validate_mnemonic
 
 
@@ -27,6 +28,8 @@ from key_manager.validators import validate_empty_dir, validate_mnemonic
 )
 @click.command(help='Creates the encrypted hot wallet from the mnemonic.')
 def create_wallet(mnemonic: str, wallet_dir: str) -> None:
+    if not wallet_dir:
+        wallet_dir = f'{BASE_DIR}/wallet'
     wallet = _generate_encrypted_wallet(mnemonic, wallet_dir)
     click.echo(f'Done. Wallet {greenify(wallet)} saved to {greenify(wallet_dir)} directory')
 
