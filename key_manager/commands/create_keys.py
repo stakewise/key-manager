@@ -9,7 +9,7 @@ from eth_typing import HexAddress
 from key_manager.contrib import async_command, greenify
 from key_manager.credentials import Credential, CredentialManager
 from key_manager.password import get_or_create_password_file
-from key_manager.settings import BASE_DIR
+from key_manager.settings import CONFIG_DIR
 from key_manager.validators import validate_eth_address, validate_mnemonic
 
 
@@ -29,7 +29,7 @@ from key_manager.validators import validate_eth_address, validate_mnemonic
 @click.option(
     '--vault',
     '--withdrawal-address',
-    help='The withdrawal address where the funds will be sent after validators’ withdrawals.',
+    help='The withdrawal address where the funds will be sent after validators withdrawals.',
     type=str,
     callback=validate_eth_address,
     required=False,
@@ -37,7 +37,8 @@ from key_manager.validators import validate_eth_address, validate_mnemonic
 @click.option(
     '--data-dir',
     required=False,
-    help='The directory to save keystores, and deposit_data.json. Defaults to ~/.stakewise.',
+    help='The directory to store the validator keys in the EIP-2335 '
+         'standard and deposit data file. Defaults to ~/.stakewise.',
     type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
 @click.command(help='Creates the validator keys from the mnemonic.')
@@ -51,7 +52,7 @@ async def create_keys(
     if data_dir:
         vault_dir = Path(data_dir)
     else:
-        vault_dir = Path(BASE_DIR) / str(vault)
+        vault_dir = Path(CONFIG_DIR) / str(vault)
     config_path = vault_dir / 'config'
     deposit_data_file = vault_dir / 'deposit_data.json'
     keystores_dir = vault_dir / 'keystores'
@@ -64,8 +65,10 @@ async def create_keys(
         raise click.ClickException(
             f'{vault_dir} does not exists, run `init` command first, {e}'
         )
-    except json.JSONDecodeError:
-        click.secho('Error reading config file: invalid JSON', bold=True, fg='red')
+    except json.JSONDecodeError as e:
+        click.ClickException(
+            f'Error reading config file: invalid JSON: {e}'
+        )
         return
 
     credentials = CredentialManager.generate_credentials(
@@ -80,7 +83,7 @@ async def create_keys(
         filename=str(deposit_data_file)
     )
 
-    _export_keystores(
+    export_keystores(
         credentials=credentials,
         keystores_dir=str(keystores_dir),
         password_file=str(password_file)
@@ -120,7 +123,7 @@ def _export_deposit_data_json(credentials: list[Credential], filename: str) -> s
     return filename
 
 
-def _export_keystores(
+def export_keystores(
     credentials: list[Credential], keystores_dir: str, password_file: str
 ) -> None:
     makedirs(path.abspath(keystores_dir), exist_ok=True)
@@ -153,7 +156,7 @@ def _update_mnemonic_next_index(config_path: Path, next_index: int) -> None:
 
         with open(config_path, 'w', encoding='utf-8') as f:
             json.dump(config, f)
-    except FileNotFoundError:
-        click.secho(f'Error: config file not found at {config_path}', bold=True, fg='red')
-    except json.JSONDecodeError:
-        click.secho(f'Error: invalid JSON in config file at {config_path}', bold=True, fg='red')
+    except FileNotFoundError as e:
+        click.ClickException(f'Error: config file not found at {config_path}: {e}')
+    except json.JSONDecodeError as e:
+        click.ClickException(f'Error: invalid JSON in config file at {config_path}" {e}')

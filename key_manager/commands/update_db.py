@@ -11,7 +11,7 @@ from web3 import Web3
 from key_manager.contrib import bytes_to_str
 from key_manager.database import Database, check_db_connection
 from key_manager.encryptor import Encryptor
-from key_manager.settings import BASE_DIR
+from key_manager.settings import CONFIG_DIR
 from key_manager.typings import DatabaseKeyRecord
 from key_manager.validators import validate_db_uri
 
@@ -67,7 +67,7 @@ def update_db(
 ) -> None:
     check_db_connection(db_url)
 
-    vault_dir = BASE_DIR / vault
+    vault_dir = CONFIG_DIR / vault
 
     keystores_dir = keystores_dir or vault_dir / 'keystores'
     keystores_password_file = keystores_password_file or vault_dir / 'keystores' / 'password.txt'

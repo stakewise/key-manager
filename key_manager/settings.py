@@ -57,4 +57,4 @@ AVAILABLE_NETWORKS = [GOERLI]
 
 DEFAULT_RETRY_TIME = 30
 
-BASE_DIR = Path.home() / '.stakewise'
+CONFIG_DIR = Path.home() / '.stakewise'
