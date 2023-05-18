@@ -1,9 +1,12 @@
 import json
 import re
 from pathlib import Path
+
 import click
-from key_manager.settings import AVAILABLE_NETWORKS
 from eth_typing import HexAddress
+
+from key_manager.settings import AVAILABLE_NETWORKS
+
 
 class Config:
     def __init__(
@@ -67,22 +70,33 @@ class Config:
         """Validates the loaded configuration data."""
         if not self.network:
             raise click.ClickException('Network is not set in the configuration.')
-        
+
         if self.network not in AVAILABLE_NETWORKS:
-            raise click.ClickException(f"Invalid 'network' in config. Expected one of {AVAILABLE_NETWORKS}, got {self.network}.")
+            raise click.ClickException(
+                "Invalid 'network' in config."
+                f'Expected one of {AVAILABLE_NETWORKS}, got {self.network}.'
+            )
 
         if self.mnemonic_next_index is None:
             raise click.ClickException('mnemonic_next_index is not set in the configuration.')
 
         if not isinstance(self.mnemonic_next_index, int):
-            raise click.ClickException(f'Expected "mnemonic_next_index" to be int, got {type(self.mnemonic_next_index).__name__}.')
+            raise click.ClickException(
+                'Expected "mnemonic_next_index" to be int, '
+                f'got {type(self.mnemonic_next_index).__name__}.'
+            )
 
         if not self.first_public_key:
             raise click.ClickException('first_public_key is not set in the configuration.')
 
         if not isinstance(self.first_public_key, str):
-            raise click.ClickException(f'Expected "first_public_key" to be str, got {type(self.first_public_key).__name__}.')
-        
-        if not re.match("^0x[0-9a-fA-F]{96}$", self.first_public_key):
+            raise click.ClickException(
+                'Expected "first_public_key" to be str, '
+                f'got {type(self.first_public_key).__name__}.'
+            )
+
+        if not re.match('^0x[0-9a-fA-F]{96}$', self.first_public_key):
             print(self.first_public_key)
-            raise click.ClickException(f"Invalid 'first_public_key'. Expected a 96-character hexadecimal string.")
+            raise click.ClickException(
+                "Invalid 'first_public_key'. Expected a 96-character hexadecimal string."
+            )
