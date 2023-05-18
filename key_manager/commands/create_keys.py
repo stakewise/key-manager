@@ -30,16 +30,9 @@ from key_manager.validators import validate_eth_address, validate_mnemonic
     '--vault',
     '--withdrawal-address',
     help='The withdrawal address where the funds will be sent after validators withdrawals.',
+    prompt='Enter the Vault address',
     type=str,
     callback=validate_eth_address,
-    required=False,
-)
-@click.option(
-    '--data-dir',
-    required=False,
-    help='The directory to store the validator keys in the EIP-2335 '
-         'standard and deposit data file. Defaults to ~/.stakewise.',
-    type=click.Path(exists=False, file_okay=False, dir_okay=True),
 )
 @click.command(help='Creates the validator keys from the mnemonic.')
 @async_command
@@ -47,12 +40,8 @@ async def create_keys(
     mnemonic: str,
     count: int,
     vault: HexAddress,
-    data_dir: str,
 ) -> None:
-    if data_dir:
-        vault_dir = Path(data_dir)
-    else:
-        vault_dir = Path(CONFIG_DIR) / str(vault)
+    vault_dir = Path(CONFIG_DIR) / str(vault)
     config_path = vault_dir / 'config'
     deposit_data_file = vault_dir / 'deposit_data.json'
     keystores_dir = vault_dir / 'keystores'
