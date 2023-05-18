@@ -5,11 +5,12 @@ from pathlib import Path
 
 import click
 from eth_account import Account
+from eth_typing import HexAddress
 
 from key_manager.contrib import greenify
 from key_manager.password import get_or_create_password_file
 from key_manager.settings import CONFIG_DIR
-from key_manager.validators import validate_mnemonic
+from key_manager.validators import validate_eth_address, validate_mnemonic
 
 
 @click.option(
@@ -19,10 +20,18 @@ from key_manager.validators import validate_mnemonic
     type=str,
     callback=validate_mnemonic,
 )
+@click.option(
+    '--vault',
+    '--withdrawal-address',
+    help='The withdrawal address where the funds will be sent after validators withdrawals.',
+    prompt='Enter the Vault address',
+    type=str,
+    callback=validate_eth_address,
+)
 @click.command(help='Creates the encrypted hot wallet from the mnemonic.')
-def create_wallet(mnemonic: str, wallet_dir: str) -> None:
-    wallet_dir_path = Path(f'{CONFIG_DIR}/wallet')
-    wallet_dir_path.mkdir(parents=True, exist_ok=True)
+def create_wallet(mnemonic: str, vault: HexAddress,) -> None:
+    wallet_dir = Path(f'{CONFIG_DIR}/{vault}/wallet')
+    wallet_dir.mkdir(parents=True, exist_ok=True)
     wallet = _generate_encrypted_wallet(mnemonic, str(wallet_dir))
     click.echo(f'Done. Wallet {greenify(wallet)} saved to {greenify(wallet_dir)} directory')
 

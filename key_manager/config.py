@@ -45,7 +45,7 @@ class Config:
         with self.config_path.open('w') as f:
             json.dump(config, f)
 
-        click.secho(f'Configuration saved in {self.vault_dir}/config', bold=True, fg='green')
+        click.secho(f'Configuration saved in {self.vault_dir}/config.json', bold=True, fg='green')
 
     def update(self, network=None, mnemonic_next_index=None, first_public_key=None):
         self.load()
@@ -64,7 +64,7 @@ class Config:
         with self.config_path.open('w') as f:
             json.dump(config, f)
 
-        click.secho(f'Configuration updated in {self.vault_dir}/config', bold=True, fg='green')
+        click.secho(f'Configuration updated in {self.vault_dir}/config.json', bold=True, fg='green')
 
     def _validate(self):
         """Validates the loaded configuration data."""
