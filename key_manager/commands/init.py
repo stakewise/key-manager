@@ -1,11 +1,9 @@
 import json
-import tempfile
 from pathlib import Path
 
 import click
 from eth_typing import HexAddress
 
-from key_manager.commands.create_keys import export_keystores
 from key_manager.credentials import CredentialManager
 from key_manager.language import LANGUAGES, create_new_mnemonic
 from key_manager.settings import AVAILABLE_NETWORKS, CONFIG_DIR, GOERLI
@@ -89,23 +87,4 @@ def _get_first_public_key(network: str, vault: HexAddress, mnemonic: str) -> str
         start_index=0,
     )
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        CONFIG_DIR = Path(temp_dir)
-        keystores_dir = CONFIG_DIR / 'keystores'
-        password_file = keystores_dir / 'password.txt'
-        export_keystores(
-            credentials=credentials,
-            keystores_dir=str(keystores_dir),
-            password_file=str(password_file)
-        )
-        keystore_files = sorted(
-            keystores_dir.glob('keystore-*'),
-            key=lambda path: path.stat().st_ctime
-        )
-        try:
-            with keystore_files[0].open('r') as f:
-                data = json.load(f)
-                first_public_key = data.get('pubkey')
-                return first_public_key
-        except FileNotFoundError as e:
-            raise click.ClickException(str(e))
+    return credentials[0].public_key

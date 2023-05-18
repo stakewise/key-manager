@@ -83,7 +83,7 @@ async def create_keys(
         filename=str(deposit_data_file)
     )
 
-    export_keystores(
+    _export_keystores(
         credentials=credentials,
         keystores_dir=str(keystores_dir),
         password_file=str(password_file)
@@ -123,7 +123,7 @@ def _export_deposit_data_json(credentials: list[Credential], filename: str) -> s
     return filename
 
 
-def export_keystores(
+def _export_keystores(
     credentials: list[Credential], keystores_dir: str, password_file: str
 ) -> None:
     makedirs(path.abspath(keystores_dir), exist_ok=True)

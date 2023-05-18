@@ -4,7 +4,7 @@ from unittest.mock import patch
 from click.testing import CliRunner
 from staking_deposit.key_handling.key_derivation.mnemonic import get_mnemonic
 
-from key_manager.commands.create_keys import export_keystores
+from key_manager.commands.create_keys import _export_keystores
 from key_manager.commands.update_db import update_db
 from key_manager.credentials import CredentialManager
 from key_manager.language import WORD_LISTS_PATH
@@ -32,7 +32,7 @@ class TestUpdateDB(unittest.TestCase):
                 start_index=0,
             )
 
-            export_keystores(
+            _export_keystores(
                 credentials=credentials,
                 keystores_dir=keystores_dir,
                 password_file=keystores_password_file,
