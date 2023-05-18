@@ -62,7 +62,7 @@ def init(
         mnemonic_next_index=0,
         first_public_key=first_public_key
     )
-    config.save()
+    config.create()
 
 
 def _get_first_public_key(network: str, vault: HexAddress, mnemonic: str) -> str:

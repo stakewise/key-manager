@@ -12,7 +12,7 @@ class Config:
     def __init__(
         self,
         vault: HexAddress,
-        network: str = None,
+        network: str = '',
         mnemonic_next_index: int = 0,
         first_public_key: str = None
     ):
@@ -30,8 +30,11 @@ class Config:
             self.network = config.get('network')
             self.mnemonic_next_index = config.get('mnemonic_next_index')
             self.first_public_key = config.get('first_public_key')
+        else:
+            raise click.ClickException(f'{self.config_path} is not a file')
+        self._validate()
 
-    def save(self):
+    def create(self):
         if self.vault_dir.exists():
             raise click.ClickException(f'Vault directory {self.vault_dir} already exists.')
         config = {
@@ -45,7 +48,7 @@ class Config:
         with self.config_path.open('w') as f:
             json.dump(config, f)
 
-        click.secho(f'Configuration saved in {self.vault_dir}/config.json', bold=True, fg='green')
+        click.secho(f'Configuration create in {self.vault_dir}/config.json', bold=True, fg='green')
 
     def update(self, network=None, mnemonic_next_index=None, first_public_key=None):
         self.load()
@@ -96,7 +99,6 @@ class Config:
             )
 
         if not re.match('^0x[0-9a-fA-F]{96}$', self.first_public_key):
-            print(self.first_public_key)
             raise click.ClickException(
                 "Invalid 'first_public_key'. Expected a 96-character hexadecimal string."
             )

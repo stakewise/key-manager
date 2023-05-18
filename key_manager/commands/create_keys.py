@@ -52,7 +52,7 @@ async def create_keys(
     config.load()
 
     credentials = CredentialManager.generate_credentials(
-        network=str(config.network),
+        network=config.network,
         vault=vault,
         mnemonic=mnemonic,
         count=count,
