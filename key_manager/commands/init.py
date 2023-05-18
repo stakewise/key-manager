@@ -1,12 +1,10 @@
-import json
-from pathlib import Path
-
 import click
 from eth_typing import HexAddress
 
+from key_manager.config import Config
 from key_manager.credentials import CredentialManager
 from key_manager.language import LANGUAGES, create_new_mnemonic
-from key_manager.settings import AVAILABLE_NETWORKS, CONFIG_DIR, GOERLI
+from key_manager.settings import AVAILABLE_NETWORKS, GOERLI
 from key_manager.validators import validate_eth_address
 
 
@@ -48,12 +46,6 @@ def init(
     vault: HexAddress,
     network: str,
 ) -> None:
-    vault_dir = Path(CONFIG_DIR) / vault
-    try:
-        vault_dir.mkdir(parents=True, exist_ok=False)
-    except FileExistsError as e:
-        raise click.ClickException(f'{e}')
-
     if not language:
         language = click.prompt(
             'Choose your mnemonic language',
@@ -64,18 +56,13 @@ def init(
 
     first_public_key = _get_first_public_key(network, vault, str(mnemonic))
 
-    config = {
-        'network': network,
-        'mnemonic_next_index': 0,
-        'first_public_key': first_public_key
-    }
-    try:
-        with (vault_dir / 'config').open('w') as f:
-            json.dump(config, f)
-    except FileNotFoundError as e:
-        raise click.ClickException(str(e))
-
-    click.secho(f'Configuration saved in {vault_dir}/config', bold=True, fg='green')
+    config = Config(
+        vault=vault,
+        network=network,
+        mnemonic_next_index=0,
+        first_public_key=first_public_key
+    )
+    config.save()
 
 
 def _get_first_public_key(network: str, vault: HexAddress, mnemonic: str) -> str:

@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 from eth_typing import HexAddress
 
+from key_manager.config import Config
 from key_manager.contrib import async_command, greenify
 from key_manager.credentials import Credential, CredentialManager
 from key_manager.password import get_or_create_password_file
@@ -47,25 +48,15 @@ async def create_keys(
     keystores_dir = vault_dir / 'keystores'
     password_file = keystores_dir / 'password.txt'
 
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-    except FileNotFoundError as e:
-        raise click.ClickException(
-            f'{vault_dir} does not exists, run `init` command first, {e}'
-        )
-    except json.JSONDecodeError as e:
-        click.ClickException(
-            f'Error reading config file: invalid JSON: {e}'
-        )
-        return
+    config = Config(vault=vault)
+    config.load()
 
     credentials = CredentialManager.generate_credentials(
-        network=config.get('network'),
+        network=str(config.network),
         vault=vault,
         mnemonic=mnemonic,
         count=count,
-        start_index=config.get('mnemonic_next_index'),
+        start_index=config.mnemonic_next_index,
     )
     deposit_data = _export_deposit_data_json(
         credentials=credentials,
@@ -78,7 +69,7 @@ async def create_keys(
         password_file=str(password_file)
     )
 
-    _update_mnemonic_next_index(config_path, config.get('mnemonic_next_index')+count)
+    config.update(mnemonic_next_index=config.mnemonic_next_index+count)
 
     click.echo(
         f'Done. Generated {greenify(count)} keys for {greenify(vault)} vault.\n'
@@ -134,18 +125,3 @@ def _export_keystores(
 
         for result in results:
             result.wait()
-
-
-def _update_mnemonic_next_index(config_path: Path, next_index: int) -> None:
-    try:
-        with open(config_path, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-
-        config['mnemonic_next_index'] = next_index
-
-        with open(config_path, 'w', encoding='utf-8') as f:
-            json.dump(config, f)
-    except FileNotFoundError as e:
-        click.ClickException(f'Error: config file not found at {config_path}: {e}')
-    except json.JSONDecodeError as e:
-        click.ClickException(f'Error: invalid JSON in config file at {config_path}" {e}')

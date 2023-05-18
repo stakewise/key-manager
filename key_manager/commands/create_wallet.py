@@ -1,6 +1,7 @@
 import json
 import time
 from os import path
+from pathlib import Path
 
 import click
 from eth_account import Account
@@ -8,7 +9,7 @@ from eth_account import Account
 from key_manager.contrib import greenify
 from key_manager.password import get_or_create_password_file
 from key_manager.settings import CONFIG_DIR
-from key_manager.validators import validate_empty_dir, validate_mnemonic
+from key_manager.validators import validate_mnemonic
 
 
 @click.option(
@@ -18,19 +19,11 @@ from key_manager.validators import validate_empty_dir, validate_mnemonic
     type=str,
     callback=validate_mnemonic,
 )
-@click.option(
-    '--wallet-dir',
-    required=False,
-    help='The directory to save encrypted wallet and password files. Defaults to ./wallet.',
-    default='./wallet',
-    type=click.Path(exists=False, file_okay=False, dir_okay=True),
-    callback=validate_empty_dir,
-)
 @click.command(help='Creates the encrypted hot wallet from the mnemonic.')
 def create_wallet(mnemonic: str, wallet_dir: str) -> None:
-    if not wallet_dir:
-        wallet_dir = f'{CONFIG_DIR}/wallet'
-    wallet = _generate_encrypted_wallet(mnemonic, wallet_dir)
+    wallet_dir_path = Path(f'{CONFIG_DIR}/wallet')
+    wallet_dir_path.mkdir(parents=True, exist_ok=True)
+    wallet = _generate_encrypted_wallet(mnemonic, str(wallet_dir))
     click.echo(f'Done. Wallet {greenify(wallet)} saved to {greenify(wallet_dir)} directory')
 
 
