@@ -47,6 +47,8 @@ class TestUpdateDB(unittest.TestCase):
                 '--db-url',
                 db_url,
                 '--no-confirm',
+                '--vault',
+                vault
             ]
             with patch('key_manager.commands.update_db.check_db_connection'), patch(
                 'key_manager.commands.update_db.Database.fetch_public_keys_count',
