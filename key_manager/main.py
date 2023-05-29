@@ -9,6 +9,7 @@ from key_manager.commands.merge_deposit import merge_deposit
 from key_manager.commands.sync_validator import sync_validator
 from key_manager.commands.sync_web3signer import sync_web3signer
 from key_manager.commands.update_db import update_db
+from key_manager.commands.validators_exit import validators_exit
 
 
 @click.group()
@@ -23,6 +24,7 @@ cli.add_command(merge_deposit)
 cli.add_command(update_db)
 cli.add_command(sync_web3signer)
 cli.add_command(sync_validator)
+cli.add_command(validators_exit)
 
 
 if __name__ == '__main__':
