@@ -2,9 +2,6 @@ import asyncio
 import collections
 from base64 import b64decode, b64encode
 from functools import wraps
-from typing import Callable
-
-import click
 
 
 def async_command(f):
@@ -15,24 +12,6 @@ def async_command(f):
         return asyncio.run(f(*args, **kwargs))
 
     return wrapper
-
-
-def async_multiprocessing_proxy(
-    f: Callable,
-    *args,
-    **kwargs,
-):
-    """Proxy to run asyncio coroutines with multiprocessing pool"""
-    return asyncio.run(f(*args, **kwargs))
-
-
-def chunkify(items, size):
-    for i in range(0, len(items), size):
-        yield items[i : i + size]
-
-
-def greenify(value):
-    return click.style(value, bold=True, fg='green')
 
 
 def bytes_to_str(value: bytes) -> str:
