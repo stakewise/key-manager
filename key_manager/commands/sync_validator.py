@@ -180,4 +180,4 @@ def _generate_proposer_config(
 
 def check_validator_index(validator_index, total_validators):
     if not total_validators or total_validators <= validator_index:
-        raise click.BadParameter('validator-index must be less than total-validators')
+        raise click.BadParameter('validator index must be less than total validators')
