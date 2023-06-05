@@ -45,7 +45,7 @@ class Database:
             with conn.cursor() as cur:
                 cur.execute(
                     'SELECT public_key FROM keys ORDER BY public_key LIMIT %s OFFSET %s;',
-                    (start_index, end_index),
+                    (end_index-start_index, start_index),
                 )
                 rows = cur.fetchall()
                 return [row[0] for row in rows]
