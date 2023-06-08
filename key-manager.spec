@@ -6,9 +6,9 @@ if platform == "linux" or platform == "linux2":
     datas = [
       ('./key_manager/abis', 'key_manager/abis/'),
       ('./key_manager/word_lists', 'key_manager/word_lists/'),
-      ('/usr/lib/x86_64-linux-gnu/libssl.so.1.1', '.'),
-      ('/usr/lib/x86_64-linux-gnu/libcrypto.so.1.1', '.'),
-      ('/usr/lib/x86_64-linux-gnu/libffi.so.7', '.')
+      ('/usr/lib/x86_64-linux-gnu/libssl.so.3', '.'),
+      ('/usr/lib/x86_64-linux-gnu/libcrypto.so.3', '.'),
+      ('/usr/lib/x86_64-linux-gnu/libffi.so.8', '.')
     ]
 else:
     datas = [
