@@ -9,16 +9,16 @@ license = "AGPL-3.0-only"
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
 click = "==8.1.3"
-web3 = "6.0.0b8"
+web3 = "6.0.0b9"
 py-ecc = "==6.0.0"
 backoff = "==2.2.1"
 colorama = "==0.4.6"
 pycryptodome = "==3.16.0"
-staking-deposit = {git = "https://github.com/ethereum/eth2.0-deposit-cli", rev = "v2.0.0"}
+staking-deposit = { git = "https://github.com/ethereum/staking-deposit-cli.git", rev = "v2.4.0" }
 python-decouple = "==3.6"
-multiproof = "==0.1.1"
+multiproof = { git = "https://github.com/stakewise/multiproof.git", rev = "v0.1.2" }
 milagro-bls-binding = "==1.9.0"
-sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.2.6"}
+sw-utils = {git = "https://github.com/stakewise/sw-utils.git", rev = "v0.3.5"}
 pyyaml = "==6.0"
 psycopg2-binary = "==2.9.5"
 
@@ -32,7 +32,7 @@ pre-commit = "==2.20.0"
 Flake8-pyproject = "==1.1.0"
 black = "==22.10.0"
 faker = "==15.3.4"
-types-requests = "==2.28.11.7"
+types-requests = "==2.28.11.15"
 types-pyyaml = "==6.0.12.2"
 pyinstaller = "==5.7.0"
 bandit = "==1.7.4"

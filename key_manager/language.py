@@ -3,7 +3,7 @@ import os
 import click
 from staking_deposit.key_handling.key_derivation.mnemonic import (
     get_mnemonic,
-    verify_mnemonic,
+    reconstruct_mnemonic,
 )
 from staking_deposit.utils.constants import MNEMONIC_LANG_OPTIONS
 
@@ -42,6 +42,6 @@ def create_new_mnemonic(mnemonic_language: str, skip_test: bool) -> None | str:
 
 
 def validate_mnemonic(mnemonic) -> str:
-    if verify_mnemonic(mnemonic, WORD_LISTS_PATH):
+    if reconstruct_mnemonic(mnemonic, WORD_LISTS_PATH):
         return mnemonic
     raise click.BadParameter('That is not a valid mnemonic, please check for typos.')
