@@ -4,9 +4,9 @@ from sys import platform
 
 if platform == "linux" or platform == "linux2":
     datas = [
-      ('/usr/lib/x86_64-linux-gnu/libssl.so.1.1', '.'),
-      ('/usr/lib/x86_64-linux-gnu/libcrypto.so.1.1', '.'),
-      ('/usr/lib/x86_64-linux-gnu/libffi.so.7', '.')
+      ('/usr/lib/x86_64-linux-gnu/libssl.so.3', '.'),
+      ('/usr/lib/x86_64-linux-gnu/libcrypto.so.3', '.'),
+      ('/usr/lib/x86_64-linux-gnu/libffi.so.8', '.')
     ]
 datas += collect_data_files('key_manager')
 datas += collect_data_files('eth_account')

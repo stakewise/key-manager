@@ -13,20 +13,11 @@ SIGNER_KEYS_FILENAME = 'signer_keys.yml'
 PROPOSER_CONFIG_FILENAME = 'proposer_config.json'
 
 
-# pylint: disable-next=unused-argument
-def validate_validator_index(ctx, param, value):
-    total_validators = ctx.params.get('total_validators', 0)
-    if not total_validators or total_validators <= value:
-        raise click.BadParameter('validator-index must be less than total-validators')
-    return value
-
-
 @click.option(
     '--validator-index',
     help='The validator index to generate the configuration files.',
     prompt='Enter the validator index to generate the configuration files',
     type=int,
-    callback=validate_validator_index,
 )
 @click.option(
     '--total-validators',
@@ -81,6 +72,7 @@ def sync_validator(
 
 ) -> None:
     check_db_connection(db_url)
+    check_validator_index(validator_index, total_validators)
 
     database = Database(db_url=db_url)
     public_keys_count = database.fetch_public_keys_count()
@@ -184,3 +176,8 @@ def _generate_proposer_config(
     }
     with open(filepath, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False, indent=4)
+
+
+def check_validator_index(validator_index, total_validators):
+    if not total_validators or total_validators <= validator_index:
+        raise click.BadParameter('validator index must be less than total validators')
