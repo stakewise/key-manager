@@ -6,7 +6,7 @@ from click.testing import CliRunner
 from eth_typing import BLSPrivateKey
 from eth_utils import add_0x_prefix
 from py_ecc.bls import G2ProofOfPossession
-from staking_deposit.key_handling.key_derivation.mnemonic import get_mnemonic, get_seed
+from staking_deposit.key_handling.key_derivation.mnemonic import get_seed
 from staking_deposit.key_handling.key_derivation.path import path_to_nodes
 from staking_deposit.key_handling.key_derivation.tree import (
     derive_child_SK,
@@ -16,12 +16,12 @@ from web3 import Web3
 
 from key_manager.commands.sync_web3signer import sync_web3signer
 from key_manager.contrib import bytes_to_str
-from key_manager.credentials import COIN_TYPE, PURPOSE
 from key_manager.encryptor import Encryptor
-from key_manager.language import WORD_LISTS_PATH
 from key_manager.typings import DatabaseKeyRecord
 
 w3 = Web3()
+PURPOSE = '12381'
+COIN_TYPE = '3600'
 
 
 class TestSyncWeb3signer(unittest.TestCase):
@@ -30,7 +30,8 @@ class TestSyncWeb3signer(unittest.TestCase):
         keys_count = 3
         encryptor = Encryptor()
 
-        mnemonic = get_mnemonic(language='english', words_path=WORD_LISTS_PATH)
+        # pylint: disable-next=line-too-long
+        mnemonic = 'fluid inmate install dash among sing found brief fork actual box tonight entire you intact camera stuff main cram alpha clog educate gown tribe'
         private_keys, db_records = _generate_keys(
             mnemonic=mnemonic, encryptor=encryptor, keys_count=keys_count
         )
