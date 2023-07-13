@@ -55,3 +55,17 @@ repos:
         entry: mypy
         language: system
         types: [ python ]
+
+  - repo: local
+    hooks:
+      - id: black
+        name: black
+        entry: black
+        language: system
+        types: [ python ]
+        args:
+          [
+            "--check",
+            "--diff",
+          ]
+        require_serial: true

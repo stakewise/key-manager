@@ -45,10 +45,9 @@ w3 = Web3()
 @click.option(
     '--encryption-key',
     help='The key for encrypting database record. '
-         'If you are upload new keystores use the same encryption key.',
+    'If you are upload new keystores use the same encryption key.',
     required=False,
     prompt=False,
-
 )
 @click.option(
     '--no-confirm',
@@ -78,10 +77,10 @@ def update_db(
     private_keys = []
 
     with click.progressbar(
-            glob.glob(os.path.join(str(keystores_dir), 'keystore-*.json')),
-            label='Loading keystores...\t\t',
-            show_percent=False,
-            show_pos=True,
+        glob.glob(os.path.join(str(keystores_dir), 'keystore-*.json')),
+        label='Loading keystores...\t\t',
+        show_percent=False,
+        show_pos=True,
     ) as _keystore_files:
         for filename in _keystore_files:
             try:
@@ -121,10 +120,7 @@ def update_db(
     )
 
 
-def _encrypt_private_keys(
-    private_keys: list[int], encryptor: Encryptor
-
-) -> list[DatabaseKeyRecord]:
+def _encrypt_private_keys(private_keys: list[int], encryptor: Encryptor) -> list[DatabaseKeyRecord]:
     """
     Returns prepared database key records from the private keys.
     """

@@ -69,7 +69,6 @@ def sync_validator(
     fee_recipient: str,
     disable_proposal_builder: bool,
     output_dir: str,
-
 ) -> None:
     check_db_connection(db_url)
     check_validator_index(validator_index, total_validators)
