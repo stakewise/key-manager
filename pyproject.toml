@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "key-manager"
-version = "0.2.0"
+version = "0.2.1"
 description = "StakeWise Operator CLI is used to generate and manage ETH2 validator keys."
 authors = ["StakeWise Labs <info@stakewise.io>"]
 readme = "README.md"
