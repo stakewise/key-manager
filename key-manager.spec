@@ -2,6 +2,7 @@
 from PyInstaller.utils.hooks import collect_data_files
 from sys import platform
 
+datas = []
 if platform == "linux" or platform == "linux2":
     datas = [
       ('/usr/lib/x86_64-linux-gnu/libssl.so.3', '.'),

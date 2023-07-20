@@ -8,6 +8,7 @@ import click
 import yaml
 from eth_utils import add_0x_prefix
 from web3 import Web3
+from web3.types import HexStr
 
 from key_manager.contrib import is_lists_equal
 from key_manager.database import Database, check_db_connection
@@ -53,7 +54,8 @@ def sync_web3signer(db_url: str, output_dir: str, decryption_key_env: str) -> No
     for key_record in keys_records:
         key = decryptor.decrypt(data=key_record.private_key, nonce=key_record.nonce)
         key_hex = Web3.to_hex(int(key))
-        private_keys.append(add_0x_prefix(key_hex))  # pad missing leading zeros
+        key_hex = HexStr(key_hex[2:].zfill(64))  # pad missing leading zeros
+        private_keys.append(add_0x_prefix(key_hex))
 
     if not exists(output_dir):
         mkdir(output_dir)
