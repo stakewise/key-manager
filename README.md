@@ -1,3 +1,5 @@
+### Key manager was merged into the [stakewise operator service](https://github.com/stakewise/v3-operator). This repository is not maintained anymore
+
 # Stakewise V3 key manager
 
 Key manager helps to manage validators keys in web3signer infrastructure.
